@@ -1,10 +1,10 @@
 package main
 
 import (
+	"cadence-los-workflow/common"
 	"context"
 	"fmt"
 	"github.com/pborman/uuid"
-	"github.com/uber-common/cadence-samples/cmd/samples/common"
 	cadence_client "go.uber.org/cadence/client"
 	"go.uber.org/zap"
 	"log"

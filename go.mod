@@ -4,19 +4,24 @@ go 1.19
 
 require (
 	github.com/gin-gonic/gin v1.8.1
+	github.com/m3db/prometheus_client_golang v1.12.8
+	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pborman/uuid v1.2.1
 	github.com/streadway/amqp v1.0.0
-	github.com/uber-common/cadence-samples v0.0.0-20220616000735-beacf223ab72
+	github.com/uber-go/tally v3.5.0+incompatible
+	github.com/uber/cadence-idl v0.0.0-20220823092026-486e297e84de
 	go.mongodb.org/mongo-driver v1.10.1
 	go.uber.org/cadence v0.19.1
+	go.uber.org/yarpc v1.63.0
 	go.uber.org/zap v1.23.0
+	gopkg.in/yaml.v2 v2.4.0
 
 )
 
 require (
 	github.com/BurntSushi/toml v1.2.0 // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
-	github.com/apache/thrift  v0.0.0-20161221203622-b2a4d4ae21c7  // indirect
+	github.com/apache/thrift v0.0.0-20161221203622-b2a4d4ae21c7 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cristalhq/jwt/v3 v3.1.0 // indirect
@@ -40,7 +45,6 @@ require (
 	github.com/kisielk/errcheck v1.6.2 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
-	github.com/m3db/prometheus_client_golang v1.12.8 // indirect
 	github.com/m3db/prometheus_client_model v0.2.1 // indirect
 	github.com/m3db/prometheus_common v0.34.7 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
@@ -48,7 +52,6 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.6.6 // indirect
-	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -61,8 +64,6 @@ require (
 	github.com/stretchr/testify v1.8.0 // indirect
 	github.com/twmb/murmur3 v1.1.6 // indirect
 	github.com/uber-go/mapdecode v1.0.0 // indirect
-	github.com/uber-go/tally v3.5.0+incompatible // indirect
-	github.com/uber/cadence-idl v0.0.0-20220823092026-486e297e84de // indirect
 	github.com/uber/tchannel-go v1.32.1 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
@@ -75,7 +76,6 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/net/metrics v1.3.1 // indirect
 	go.uber.org/thriftrw v1.29.2 // indirect
-	go.uber.org/yarpc v1.63.0 // indirect
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20220827204233-334a2380cb91 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
@@ -89,7 +89,6 @@ require (
 	google.golang.org/genproto v0.0.0-20220902135211-223410557253 // indirect
 	google.golang.org/grpc v1.49.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.3.3 // indirect
 )
