@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	h              common.SampleHelper
+	h              common.LosHelper
 	workflowClient cadence_client.Client
 )
 

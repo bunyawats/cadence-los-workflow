@@ -1,27 +1,35 @@
 package main
 
 import (
-	"cadence-los-workflow/common"
+	los_common "cadence-los-workflow/common"
 	"context"
+	"encoding/json"
 	"fmt"
+	"go.uber.org/cadence/activity"
 	"go.uber.org/cadence/client"
 	"go.uber.org/cadence/worker"
+	"log"
 	"time"
 
-	"go.uber.org/cadence/activity"
 	"go.uber.org/cadence/workflow"
 	"go.uber.org/zap"
 )
 
-// applicationName is the task list for this sample
 const (
 	applicationName            = "loanOnBoardingGroup"
 	loanOnBoardingWorkflowName = "loanOnBoardingWorkflow"
 )
 
-// This needs to be done as part of a bootstrap step when the process starts.
-// The workers are supposed to be long running.
-func StartWorkers(h *common.SampleHelper) {
+type (
+	TaskToken struct {
+		DomainID   string `json:"domainId"`
+		WorkflowID string `json:"workflowId"`
+		RunID      string `json:"runId"`
+		ScheduleID int64  `json:"scheduleId"`
+	}
+)
+
+func StartWorkers(h *los_common.LosHelper) {
 	// Configure worker options.
 	workerOptions := worker.Options{
 		MetricsScope: h.WorkerMetricScope,
@@ -33,7 +41,7 @@ func StartWorkers(h *common.SampleHelper) {
 	h.StartWorkers(h.Config.DomainName, applicationName, workerOptions)
 }
 
-func RegisterWorkflowAndActivity(h *common.SampleHelper) {
+func RegisterWorkflowAndActivity(h *los_common.LosHelper) {
 
 	h.RegisterWorkflowWithAlias(loanOnBoardingWorkflow, loanOnBoardingWorkflowName)
 
@@ -111,9 +119,22 @@ func createNewAppActivity(ctx context.Context, loanAppID string) (string, error)
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
 
+	DeserializeTaskToken(activityInfo.TaskToken)
+
 	UpdateLoanApplicationTaskToken(loanAppID, "NEW_APPLICATION", taskToken)
 
 	return "SUCCESS", nil
+}
+
+func DeserializeTaskToken(taskToken []byte) *TaskToken {
+	token := &TaskToken{}
+	err := json.Unmarshal(taskToken, token)
+	if err != nil {
+		log.Printf(err.Error())
+	} else {
+		fmt.Printf("\nWorkflowID: %v \nRunID: %v \n\n", token.WorkflowID, token.RunID)
+	}
+	return token
 }
 
 func submitFormOneActivity(ctx context.Context, loanAppID string) (string, error) {

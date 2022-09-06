@@ -6,7 +6,7 @@ import (
 
 func main() {
 
-	h := common.SampleHelper{}
+	h := common.LosHelper{}
 	h.SetupServiceConfig()
 
 	RegisterWorkflowAndActivity(&h)
