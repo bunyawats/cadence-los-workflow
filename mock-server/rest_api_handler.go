@@ -93,3 +93,23 @@ func SubmitFormTwoHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, loanApp)
 }
+
+func QueryStateHandler(c *gin.Context) {
+
+	fmt.Println("Call QueryStateHandler API")
+
+	appID := c.Param("appId")
+	taskToken := QueryApplicationState(appID)
+	if taskToken != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"appID":      appID,
+			"WorkflowID": taskToken.WorkflowID,
+			"RunID":      taskToken.RunID,
+		})
+		return
+	}
+	c.JSON(http.StatusNotFound, gin.H{
+		"error": "Token not found",
+	})
+
+}

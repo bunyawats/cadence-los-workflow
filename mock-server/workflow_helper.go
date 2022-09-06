@@ -3,6 +3,7 @@ package main
 import (
 	"cadence-los-workflow/common"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/pborman/uuid"
 	cadence_client "go.uber.org/cadence/client"
@@ -14,6 +15,15 @@ import (
 const (
 	applicationName            = "loanOnBoardingGroup"
 	loanOnBoardingWorkflowName = "loanOnBoardingWorkflow"
+)
+
+type (
+	TaskToken struct {
+		DomainID   string `json:"domainId"`
+		WorkflowID string `json:"workflowId"`
+		RunID      string `json:"runId"`
+		ScheduleID int64  `json:"scheduleId"`
+	}
 )
 
 var (
@@ -57,4 +67,35 @@ func CompleteActivity(appID string, lastState string) {
 			fmt.Printf("Successfully complete activity: %s\n", taskToken)
 		}
 	}
+}
+
+func deserializeTaskToken(taskToken []byte) *TaskToken {
+
+	token := &TaskToken{}
+	err := json.Unmarshal(taskToken, token)
+	if err != nil {
+		return nil
+	}
+	return token
+}
+
+func QueryApplicationState(appID string) *TaskToken {
+
+	taskTokenStr, err := GetTokenByAppID(appID)
+
+	var taskToken *TaskToken
+
+	if err != nil {
+		return nil
+	}
+
+	taskToken = deserializeTaskToken([]byte(taskTokenStr))
+
+	h.QueryWorkflow(
+		taskToken.WorkflowID,
+		taskToken.RunID,
+		"__open_sessions",
+	)
+
+	return taskToken
 }

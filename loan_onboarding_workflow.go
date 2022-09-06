@@ -3,12 +3,10 @@ package main
 import (
 	los_common "cadence-los-workflow/common"
 	"context"
-	"encoding/json"
 	"fmt"
 	"go.uber.org/cadence/activity"
 	"go.uber.org/cadence/client"
 	"go.uber.org/cadence/worker"
-	"log"
 	"time"
 
 	"go.uber.org/cadence/workflow"
@@ -18,15 +16,6 @@ import (
 const (
 	applicationName            = "loanOnBoardingGroup"
 	loanOnBoardingWorkflowName = "loanOnBoardingWorkflow"
-)
-
-type (
-	TaskToken struct {
-		DomainID   string `json:"domainId"`
-		WorkflowID string `json:"workflowId"`
-		RunID      string `json:"runId"`
-		ScheduleID int64  `json:"scheduleId"`
-	}
 )
 
 func StartWorkers(h *los_common.LosHelper) {
@@ -119,22 +108,9 @@ func createNewAppActivity(ctx context.Context, loanAppID string) (string, error)
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
 
-	DeserializeTaskToken(activityInfo.TaskToken)
-
 	UpdateLoanApplicationTaskToken(loanAppID, "NEW_APPLICATION", taskToken)
 
 	return "SUCCESS", nil
-}
-
-func DeserializeTaskToken(taskToken []byte) *TaskToken {
-	token := &TaskToken{}
-	err := json.Unmarshal(taskToken, token)
-	if err != nil {
-		log.Printf(err.Error())
-	} else {
-		fmt.Printf("\nWorkflowID: %v \nRunID: %v \n\n", token.WorkflowID, token.RunID)
-	}
-	return token
 }
 
 func submitFormOneActivity(ctx context.Context, loanAppID string) (string, error) {

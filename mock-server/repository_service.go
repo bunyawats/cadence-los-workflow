@@ -167,7 +167,6 @@ func GetTokenByAppID(appID string) (string, error) {
 	if err := collection.FindOne(ctx, filter).Decode(loanApplication); err != nil {
 		return "NA", err
 	}
-	log.Printf("loan application \n %v\n", loanApplication)
 
 	return loanApplication.TaskToken, nil
 }
