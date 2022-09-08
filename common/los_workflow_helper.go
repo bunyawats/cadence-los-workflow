@@ -256,7 +256,7 @@ func (h *LosHelper) StartWorkers(domainName string, groupName string, options wo
 	}
 }
 
-func (h *LosHelper) QueryWorkflow(workflowID, runID, queryType string, args ...interface{}) {
+func (h *LosHelper) QueryWorkflow(workflowID, runID, queryType string, args ...interface{}) (state string) {
 	workflowClient, err := h.Builder.BuildCadenceClient()
 	if err != nil {
 		h.Logger.Error("Failed to build cadence client.", zap.Error(err))
@@ -273,6 +273,8 @@ func (h *LosHelper) QueryWorkflow(workflowID, runID, queryType string, args ...i
 		h.Logger.Error("Failed to decode query result", zap.Error(err))
 	}
 	h.Logger.Info("Received query result", zap.Any("Result", result))
+	state = fmt.Sprintf("%v", result)
+	return state
 }
 
 func (h *LosHelper) ConsistentQueryWorkflow(

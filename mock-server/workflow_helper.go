@@ -23,6 +23,7 @@ type (
 		WorkflowID string `json:"workflowId"`
 		RunID      string `json:"runId"`
 		ScheduleID int64  `json:"scheduleId"`
+		State      string `json:"state"`
 	}
 )
 
@@ -91,7 +92,7 @@ func QueryApplicationState(appID string) *TaskToken {
 
 	taskToken = deserializeTaskToken([]byte(taskTokenStr))
 
-	h.QueryWorkflow(
+	taskToken.State = h.QueryWorkflow(
 		taskToken.WorkflowID,
 		taskToken.RunID,
 		"state",

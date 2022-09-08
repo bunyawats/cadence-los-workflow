@@ -102,9 +102,10 @@ func QueryStateHandler(c *gin.Context) {
 	taskToken := QueryApplicationState(appID)
 	if taskToken != nil {
 		c.JSON(http.StatusOK, gin.H{
-			"appID":      appID,
-			"WorkflowID": taskToken.WorkflowID,
-			"RunID":      taskToken.RunID,
+			"app_id":      appID,
+			"workflow_id": taskToken.WorkflowID,
+			"run_id":      taskToken.RunID,
+			"state":       taskToken.State,
 		})
 		return
 	}
