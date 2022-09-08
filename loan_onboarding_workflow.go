@@ -123,7 +123,7 @@ func createNewAppActivity(ctx context.Context, loanAppID string) (string, error)
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
 
-	UpdateLoanApplicationTaskToken(loanAppID, "NEW_APPLICATION", taskToken)
+	los_common.UpdateLoanApplicationTaskToken(loanAppID, "NEW_APPLICATION", taskToken)
 
 	return "SUCCESS", nil
 }
@@ -135,7 +135,7 @@ func submitFormOneActivity(ctx context.Context, loanAppID string) (string, error
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
 
-	UpdateLoanApplicationTaskToken(loanAppID, "SUBMIT_FORM_ONE", taskToken)
+	los_common.UpdateLoanApplicationTaskToken(loanAppID, "SUBMIT_FORM_ONE", taskToken)
 
 	return "", activity.ErrResultPending
 }
@@ -147,7 +147,7 @@ func submitFormTwoActivity(ctx context.Context, loanAppID string) (string, error
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
 
-	UpdateLoanApplicationTaskToken(loanAppID, "SUBMIT_FORM_TWO", taskToken)
+	los_common.UpdateLoanApplicationTaskToken(loanAppID, "SUBMIT_FORM_TWO", taskToken)
 
 	return "", activity.ErrResultPending
 }
@@ -159,7 +159,7 @@ func submitDE1Activity(ctx context.Context, loanAppID string) (string, error) {
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
 
-	UpdateLoanApplicationTaskToken(loanAppID, "SUBMIT_DE_ONE", taskToken)
+	los_common.UpdateLoanApplicationTaskToken(loanAppID, "SUBMIT_DE_ONE", taskToken)
 
 	return "", activity.ErrResultPending
 }
@@ -171,7 +171,7 @@ func approveActivity(ctx context.Context, loanAppID string) (string, error) {
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
 
-	UpdateLoanApplicationTaskToken(loanAppID, "APPROVED", taskToken)
+	los_common.UpdateLoanApplicationTaskToken(loanAppID, "APPROVED", taskToken)
 
 	return "SUCCESS", nil
 }
@@ -183,7 +183,7 @@ func rejectActivity(ctx context.Context, loanAppID string) (string, error) {
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
 
-	UpdateLoanApplicationTaskToken(loanAppID, "REJECTED", taskToken)
+	los_common.UpdateLoanApplicationTaskToken(loanAppID, "REJECTED", taskToken)
 
 	return "SUCCESS", nil
 }

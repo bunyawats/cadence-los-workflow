@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cadence-los-workflow/common"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -29,7 +30,7 @@ func CreateNewLoanApplicationHandler(c *gin.Context) {
 
 	appID := c.Param("appId")
 
-	if err := CreateNewLoanApplication(appID); err != nil {
+	if err := common.CreateNewLoanApplication(appID); err != nil {
 		c.JSON(http.StatusConflict, gin.H{
 			"error": err.Error(),
 		})
@@ -46,7 +47,7 @@ func SubmitFormOneHandler(c *gin.Context) {
 
 	fmt.Println("Call SubmitFormOneHandler API")
 
-	var request LoanApplication
+	var request common.LoanApplication
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -55,7 +56,7 @@ func SubmitFormOneHandler(c *gin.Context) {
 	}
 	request.AppID = c.Param("appId")
 
-	loanApp, err := SaveFormOne(&request)
+	loanApp, err := common.SaveFormOne(&request)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -72,7 +73,7 @@ func SubmitFormTwoHandler(c *gin.Context) {
 
 	fmt.Println("Call SubmitFormTwoHandler API")
 
-	var request LoanApplication
+	var request common.LoanApplication
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -81,7 +82,7 @@ func SubmitFormTwoHandler(c *gin.Context) {
 	}
 	request.AppID = c.Param("appId")
 
-	loanApp, err := SaveFormTwo(&request)
+	loanApp, err := common.SaveFormTwo(&request)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),

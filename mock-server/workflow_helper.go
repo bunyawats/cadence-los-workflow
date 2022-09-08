@@ -3,7 +3,6 @@ package main
 import (
 	"cadence-los-workflow/common"
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/pborman/uuid"
 	cadence_client "go.uber.org/cadence/client"
@@ -15,16 +14,6 @@ import (
 const (
 	applicationName            = "loanOnBoardingGroup"
 	loanOnBoardingWorkflowName = "loanOnBoardingWorkflow"
-)
-
-type (
-	TaskToken struct {
-		DomainID   string `json:"domainId"`
-		WorkflowID string `json:"workflowId"`
-		RunID      string `json:"runId"`
-		ScheduleID int64  `json:"scheduleId"`
-		State      string `json:"state"`
-	}
 )
 
 var (
@@ -54,7 +43,7 @@ func StartWorkflow(appID string) {
 }
 
 func CompleteActivity(appID string, lastState string) {
-	taskToken, err := GetTokenByAppID(appID)
+	taskToken, err := common.GetTokenByAppID(appID)
 	if err != nil {
 		fmt.Printf("Failed to find taskToken by error : %+v\n", err)
 	} else {
@@ -70,27 +59,17 @@ func CompleteActivity(appID string, lastState string) {
 	}
 }
 
-func deserializeTaskToken(taskToken []byte) *TaskToken {
+func QueryApplicationState(appID string) *common.TaskToken {
 
-	token := &TaskToken{}
-	err := json.Unmarshal(taskToken, token)
-	if err != nil {
-		return nil
-	}
-	return token
-}
+	taskTokenStr, err := common.GetTokenByAppID(appID)
 
-func QueryApplicationState(appID string) *TaskToken {
-
-	taskTokenStr, err := GetTokenByAppID(appID)
-
-	var taskToken *TaskToken
+	var taskToken *common.TaskToken
 
 	if err != nil {
 		return nil
 	}
 
-	taskToken = deserializeTaskToken([]byte(taskTokenStr))
+	taskToken = common.DeserializeTaskToken([]byte(taskTokenStr))
 
 	taskToken.State = h.QueryWorkflow(
 		taskToken.WorkflowID,
