@@ -33,7 +33,7 @@ go build -o los-workflow *.go
 
 # start los workflow
 export MONGO_DATABASE=test \
-export MONGO_URI=mongodb://localhost:27017/test \
+export MONGO_URI=mongodb://localhost:27017/test 
 
 go run *.go
 
@@ -43,4 +43,4 @@ export MONGO_URI=mongodb://localhost:27017/test \
 export RABBITMQ_URI="amqp://user:password@localhost:5672/" \
 export RABBITMQ_QUEUE=nlos
 
-go run ./mock-server *.go
+go run ./mock-server  *.go

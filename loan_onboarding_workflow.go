@@ -57,42 +57,57 @@ func loanOnBoardingWorkflow(ctx workflow.Context, loanAppID string) error {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("loan on boarding workflow started loanAppID: " + loanAppID)
 
-	err := workflow.ExecuteActivity(ctx, createNewAppActivity, loanAppID).Get(ctx, &activityResult)
-	logger.Info("\n-----submitFormOneActivity completed.-----\n", zap.String("Result", activityResult))
+	// setup query handler for query type "state"
+	err := workflow.SetQueryHandler(ctx, "state", func(input []byte) (string, error) {
+		return lastState, nil
+	})
+	if err != nil {
+		logger.Info("SetQueryHandler failed: " + err.Error())
+		return err
+	}
+
+	err = workflow.ExecuteActivity(ctx, createNewAppActivity, loanAppID).Get(ctx, &activityResult)
 	if err != nil {
 		logger.Error("Activity failed.", zap.Error(err))
 		return err
 	}
+	lastState = "NEW_APPLICATION_CREATED"
+	logger.Info("\n-----createNewAppActivity completed.-----\n", zap.String("Result", lastState))
 
 	err = workflow.ExecuteActivity(ctx, submitFormOneActivity, loanAppID).Get(ctx, &activityResult)
-	logger.Info("\n-----submitFormOneActivity completed.-----\n", zap.String("Result", activityResult))
 	if err != nil {
 		logger.Error("Activity failed.", zap.Error(err))
 		return err
 	}
+	lastState = "FORM_ONE_SUBMITTED"
+	logger.Info("\n-----submitFormOneActivity completed.-----\n", zap.String("Result", lastState))
 
-	err = workflow.ExecuteActivity(ctx, submitFormTwoActivity, loanAppID).Get(ctx, &lastState)
+	err = workflow.ExecuteActivity(ctx, submitFormTwoActivity, loanAppID).Get(ctx, &activityResult)
+	if err != nil {
+		logger.Error("Activity failed.", zap.Error(err))
+		return err
+	}
+	lastState = "FORM_TWO_SUBMITTED"
 	logger.Info("\n-----submitFormTwoActivity completed.-----\n", zap.String("Result", lastState))
+
+	err = workflow.ExecuteActivity(ctx, submitDE1Activity, loanAppID).Get(ctx, &activityResult)
 	if err != nil {
 		logger.Error("Activity failed.", zap.Error(err))
 		return err
 	}
-
-	err = workflow.ExecuteActivity(ctx, submitDE1Activity, loanAppID).Get(ctx, &lastState)
+	lastState = "DE_ONE_SUBMITTED"
 	logger.Info("\n-----submitDE1Activity completed.-----\n", zap.String("Result", lastState))
-	if err != nil {
-		logger.Error("Activity failed.", zap.Error(err))
-		return err
-	}
 
-	logger.Info(fmt.Sprintf("\n\n\n+++++before choice+++++ : %v \n\n\n", lastState))
-	switch lastState {
+	logger.Info(fmt.Sprintf("\n\n\n+++++before choice+++++ : %v \n\n\n", activityResult))
+	switch activityResult {
 	case "APPROVE":
 		err = workflow.ExecuteActivity(ctx, approveActivity, loanAppID).Get(ctx, &activityResult)
-		logger.Info("\n-----approveActivity completed.-----\n", zap.String("Result", activityResult))
+		lastState = "APPLICATION_APPROVED"
+		logger.Info("\n-----approveActivity completed.-----\n", zap.String("Result", lastState))
 	case "REJECT":
 		err = workflow.ExecuteActivity(ctx, rejectActivity, loanAppID).Get(ctx, &activityResult)
-		logger.Info("\n-----rejectActivity completed.-----\n", zap.String("Result", activityResult))
+		lastState = "APPLICATION_REJECTED"
+		logger.Info("\n-----rejectActivity completed.-----\n", zap.String("Result", lastState))
 	}
 	if err != nil {
 		logger.Error("Activity failed.", zap.Error(err))

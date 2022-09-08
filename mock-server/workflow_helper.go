@@ -94,7 +94,7 @@ func QueryApplicationState(appID string) *TaskToken {
 	h.QueryWorkflow(
 		taskToken.WorkflowID,
 		taskToken.RunID,
-		"__open_sessions",
+		"state",
 	)
 
 	return taskToken
