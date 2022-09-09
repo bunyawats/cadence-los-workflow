@@ -14,8 +14,8 @@ import (
 
 func main() {
 
-	//runGin()
-	runGrpc()
+	runGin()
+	//runGrpc()
 }
 
 func runGin() error {

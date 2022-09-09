@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cadence-los-workflow/common"
 	"encoding/json"
 	"fmt"
 	"github.com/streadway/amqp"
@@ -11,13 +12,6 @@ import (
 const (
 	rabbitMqUri   = "RABBITMQ_URI"
 	rabbitMqQueue = "RABBITMQ_QUEUE"
-)
-
-type (
-	DEResult struct {
-		AppID  string `json:"appID"`
-		Status string `json:"status"`
-	}
 )
 
 var (
@@ -35,10 +29,10 @@ func init() {
 	publishChannelAmqp, _ = amqpConnection.Channel()
 	log.Println("rabbit mq connected")
 
-	ConsumeRabbitMqMessage()
+	//	ConsumeRabbitMqMessage()
 }
 
-func Publish2RabbitMQ(payload *DEResult) {
+func Publish2RabbitMQ(payload *common.DEResult) {
 
 	data, _ := json.Marshal(payload)
 	err := publishChannelAmqp.Publish(
@@ -54,31 +48,4 @@ func Publish2RabbitMQ(payload *DEResult) {
 	if err != nil {
 		fmt.Println(err)
 	}
-}
-
-func ConsumeRabbitMqMessage() {
-	amqpConnection, err := amqp.Dial(os.Getenv(rabbitMqUri))
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	consumeChannelAmqp, _ = amqpConnection.Channel()
-	msgs, err := consumeChannelAmqp.Consume(
-		os.Getenv(rabbitMqQueue),
-		"",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
-	go func() {
-		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
-			var request DEResult
-			json.Unmarshal(d.Body, &request)
-
-			CompleteActivity(request.AppID, request.Status)
-		}
-	}()
 }

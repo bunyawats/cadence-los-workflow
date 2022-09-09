@@ -11,7 +11,7 @@ func NLOS_NotificationHandler(c *gin.Context) {
 
 	fmt.Println("Call NLOS_NotificationHandler API")
 
-	var request DEResult
+	var request common.DEResult
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
