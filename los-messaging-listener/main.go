@@ -17,7 +17,6 @@ const (
 )
 
 var (
-	publishChannelAmqp *amqp.Channel
 	consumeChannelAmqp *amqp.Channel
 	amqpConnection     *amqp.Connection
 
@@ -34,11 +33,10 @@ func init() {
 		panic(err)
 	}
 
-	amqpConnection, err := amqp.Dial(os.Getenv(rabbitMqUri))
+	amqpConnection, err = amqp.Dial(os.Getenv(rabbitMqUri))
 	if err != nil {
 		log.Fatalln("rabbit mq error: ", os.Getenv(rabbitMqUri), err)
 	}
-	publishChannelAmqp, _ = amqpConnection.Channel()
 	log.Println("rabbit mq connected")
 
 }
@@ -51,13 +49,9 @@ func main() {
 }
 
 func ConsumeRabbitMqMessage() {
-	amqpConnection, err := amqp.Dial(os.Getenv(rabbitMqUri))
-	if err != nil {
-		log.Fatalln(err)
-	}
 
 	consumeChannelAmqp, _ = amqpConnection.Channel()
-	msgs, err := consumeChannelAmqp.Consume(
+	msgs, _ := consumeChannelAmqp.Consume(
 		os.Getenv(rabbitMqQueue),
 		"",
 		true,
