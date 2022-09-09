@@ -26,8 +26,8 @@ func StartWorkflow(h *LosHelper, appID string) {
 	log.Println("Started work flow!", zap.String("WorkflowId", execution.ID), zap.String("RunId", execution.RunID))
 }
 
-func CompleteActivity(workflowClient cadence_client.Client, appID string, lastState string) {
-	taskToken, err := GetTokenByAppID(appID)
+func CompleteActivity(m *MongodbHelper, workflowClient cadence_client.Client, appID string, lastState string) {
+	taskToken, err := m.GetTokenByAppID(appID)
 	if err != nil {
 		fmt.Printf("Failed to find taskToken by error : %+v\n", err)
 	} else {
@@ -43,9 +43,9 @@ func CompleteActivity(workflowClient cadence_client.Client, appID string, lastSt
 	}
 }
 
-func QueryApplicationState(h *LosHelper, appID string) *TaskToken {
+func QueryApplicationState(m *MongodbHelper, h *LosHelper, appID string) *TaskToken {
 
-	taskTokenStr, err := GetTokenByAppID(appID)
+	taskTokenStr, err := m.GetTokenByAppID(appID)
 
 	var taskToken *TaskToken
 

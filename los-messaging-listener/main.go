@@ -13,17 +13,26 @@ import (
 const (
 	rabbitMqUri   = "RABBITMQ_URI"
 	rabbitMqQueue = "RABBITMQ_QUEUE"
+
+	mongoUri      = "MONGO_URI"
+	mongoDatabase = "MONGO_DATABASE"
 )
 
 var (
 	consumeChannelAmqp *amqp.Channel
 	amqpConnection     *amqp.Connection
 
+	m              *common.MongodbHelper
 	h              common.LosHelper
 	workflowClient cadence_client.Client
 )
 
 func init() {
+
+	m = common.NewMongodbHelper(common.MongodbConfig{
+		MongoUri:      os.Getenv(mongoUri),
+		MongoDatabase: os.Getenv(mongoDatabase),
+	})
 
 	h.SetupServiceConfig()
 	var err error
@@ -65,7 +74,7 @@ func ConsumeRabbitMqMessage() {
 			var request common.DEResult
 			json.Unmarshal(d.Body, &request)
 
-			common.CompleteActivity(workflowClient, request.AppID, request.Status)
+			common.CompleteActivity(m, workflowClient, request.AppID, request.Status)
 		}
 	}()
 }

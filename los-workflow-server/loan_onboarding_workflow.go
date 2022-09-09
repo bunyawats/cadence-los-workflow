@@ -7,6 +7,7 @@ import (
 	"go.uber.org/cadence/activity"
 	"go.uber.org/cadence/client"
 	"go.uber.org/cadence/worker"
+	"os"
 	"time"
 
 	"go.uber.org/cadence/workflow"
@@ -16,7 +17,23 @@ import (
 const (
 	applicationName            = "loanOnBoardingGroup"
 	loanOnBoardingWorkflowName = "loanOnBoardingWorkflow"
+
+	mongoUri      = "MONGO_URI"
+	mongoDatabase = "MONGO_DATABASE"
 )
+
+var (
+	m *los_common.MongodbHelper
+)
+
+func init() {
+
+	m = los_common.NewMongodbHelper(los_common.MongodbConfig{
+		MongoUri:      os.Getenv(mongoUri),
+		MongoDatabase: os.Getenv(mongoDatabase),
+	})
+
+}
 
 func StartWorkers(h *los_common.LosHelper) {
 	// Configure worker options.
@@ -123,7 +140,7 @@ func createNewAppActivity(ctx context.Context, loanAppID string) (string, error)
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
 
-	los_common.UpdateLoanApplicationTaskToken(loanAppID, "NEW_APPLICATION", taskToken)
+	m.UpdateLoanApplicationTaskToken(loanAppID, "NEW_APPLICATION", taskToken)
 
 	return "SUCCESS", nil
 }
@@ -135,7 +152,7 @@ func submitFormOneActivity(ctx context.Context, loanAppID string) (string, error
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
 
-	los_common.UpdateLoanApplicationTaskToken(loanAppID, "SUBMIT_FORM_ONE", taskToken)
+	m.UpdateLoanApplicationTaskToken(loanAppID, "SUBMIT_FORM_ONE", taskToken)
 
 	return "", activity.ErrResultPending
 }
@@ -147,7 +164,7 @@ func submitFormTwoActivity(ctx context.Context, loanAppID string) (string, error
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
 
-	los_common.UpdateLoanApplicationTaskToken(loanAppID, "SUBMIT_FORM_TWO", taskToken)
+	m.UpdateLoanApplicationTaskToken(loanAppID, "SUBMIT_FORM_TWO", taskToken)
 
 	return "", activity.ErrResultPending
 }
@@ -159,7 +176,7 @@ func submitDE1Activity(ctx context.Context, loanAppID string) (string, error) {
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
 
-	los_common.UpdateLoanApplicationTaskToken(loanAppID, "SUBMIT_DE_ONE", taskToken)
+	m.UpdateLoanApplicationTaskToken(loanAppID, "SUBMIT_DE_ONE", taskToken)
 
 	return "", activity.ErrResultPending
 }
@@ -171,7 +188,7 @@ func approveActivity(ctx context.Context, loanAppID string) (string, error) {
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
 
-	los_common.UpdateLoanApplicationTaskToken(loanAppID, "APPROVED", taskToken)
+	m.UpdateLoanApplicationTaskToken(loanAppID, "APPROVED", taskToken)
 
 	return "SUCCESS", nil
 }
@@ -183,7 +200,7 @@ func rejectActivity(ctx context.Context, loanAppID string) (string, error) {
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
 
-	los_common.UpdateLoanApplicationTaskToken(loanAppID, "REJECTED", taskToken)
+	m.UpdateLoanApplicationTaskToken(loanAppID, "REJECTED", taskToken)
 
 	return "SUCCESS", nil
 }
