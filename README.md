@@ -48,6 +48,6 @@ go run ./los-api-server  *.go
 
 # generate go grpc with buf
 cd  los-api-server \
-buf generate  losapis
+buf generate  
 
 
