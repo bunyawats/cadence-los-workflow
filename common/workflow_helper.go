@@ -1,7 +1,6 @@
-package main
+package common
 
 import (
-	"cadence-los-workflow/common"
 	"context"
 	"fmt"
 	"github.com/pborman/uuid"
@@ -16,22 +15,7 @@ const (
 	loanOnBoardingWorkflowName = "loanOnBoardingWorkflow"
 )
 
-var (
-	h              common.LosHelper
-	workflowClient cadence_client.Client
-)
-
-func init() {
-
-	h.SetupServiceConfig()
-	var err error
-	workflowClient, err = h.Builder.BuildCadenceClient()
-	if err != nil {
-		panic(err)
-	}
-}
-
-func StartWorkflow(appID string) {
+func StartWorkflow(h *LosHelper, appID string) {
 	workflowOptions := cadence_client.StartWorkflowOptions{
 		ID:                              "loan_on_boarding_" + uuid.New(),
 		TaskList:                        applicationName,
@@ -42,8 +26,8 @@ func StartWorkflow(appID string) {
 	log.Println("Started work flow!", zap.String("WorkflowId", execution.ID), zap.String("RunId", execution.RunID))
 }
 
-func CompleteActivity(appID string, lastState string) {
-	taskToken, err := common.GetTokenByAppID(appID)
+func CompleteActivity(workflowClient cadence_client.Client, appID string, lastState string) {
+	taskToken, err := GetTokenByAppID(appID)
 	if err != nil {
 		fmt.Printf("Failed to find taskToken by error : %+v\n", err)
 	} else {
@@ -59,17 +43,17 @@ func CompleteActivity(appID string, lastState string) {
 	}
 }
 
-func QueryApplicationState(appID string) *common.TaskToken {
+func QueryApplicationState(h *LosHelper, appID string) *TaskToken {
 
-	taskTokenStr, err := common.GetTokenByAppID(appID)
+	taskTokenStr, err := GetTokenByAppID(appID)
 
-	var taskToken *common.TaskToken
+	var taskToken *TaskToken
 
 	if err != nil {
 		return nil
 	}
 
-	taskToken = common.DeserializeTaskToken([]byte(taskTokenStr))
+	taskToken = DeserializeTaskToken([]byte(taskTokenStr))
 
 	taskToken.State = h.QueryWorkflow(
 		taskToken.WorkflowID,

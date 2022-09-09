@@ -4,8 +4,24 @@ import (
 	"cadence-los-workflow/common"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	cadence_client "go.uber.org/cadence/client"
 	"net/http"
 )
+
+var (
+	h              common.LosHelper
+	workflowClient cadence_client.Client
+)
+
+func init() {
+
+	h.SetupServiceConfig()
+	var err error
+	workflowClient, err = h.Builder.BuildCadenceClient()
+	if err != nil {
+		panic(err)
+	}
+}
 
 func NLOS_NotificationHandler(c *gin.Context) {
 
@@ -37,7 +53,7 @@ func CreateNewLoanApplicationHandler(c *gin.Context) {
 		return
 	}
 
-	StartWorkflow(appID)
+	common.StartWorkflow(&h, appID)
 	c.JSON(http.StatusOK, gin.H{
 		"appID": appID,
 	})
@@ -64,7 +80,7 @@ func SubmitFormOneHandler(c *gin.Context) {
 		return
 	}
 
-	CompleteActivity(request.AppID, "SUCCESS")
+	common.CompleteActivity(workflowClient, request.AppID, "SUCCESS")
 
 	c.JSON(http.StatusOK, loanApp)
 }
@@ -90,7 +106,7 @@ func SubmitFormTwoHandler(c *gin.Context) {
 		return
 	}
 
-	CompleteActivity(request.AppID, "SUCCESS")
+	common.CompleteActivity(workflowClient, request.AppID, "SUCCESS")
 
 	c.JSON(http.StatusOK, loanApp)
 }
@@ -100,7 +116,7 @@ func QueryStateHandler(c *gin.Context) {
 	fmt.Println("Call QueryStateHandler API")
 
 	appID := c.Param("appId")
-	taskToken := QueryApplicationState(appID)
+	taskToken := common.QueryApplicationState(&h, appID)
 	if taskToken != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"app_id":      appID,

@@ -4,10 +4,13 @@ import (
 	"cadence-los-workflow/common"
 )
 
-func main() {
+var h common.LosHelper
 
-	h := common.LosHelper{}
+func init() {
 	h.SetupServiceConfig()
+}
+
+func main() {
 
 	RegisterWorkflowAndActivity(&h)
 	StartWorkers(&h)

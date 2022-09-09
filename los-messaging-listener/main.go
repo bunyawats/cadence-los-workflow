@@ -2,7 +2,6 @@ package main
 
 import (
 	"cadence-los-workflow/common"
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/streadway/amqp"
@@ -66,24 +65,7 @@ func ConsumeRabbitMqMessage() {
 			var request common.DEResult
 			json.Unmarshal(d.Body, &request)
 
-			CompleteActivity(request.AppID, request.Status)
+			common.CompleteActivity(workflowClient, request.AppID, request.Status)
 		}
 	}()
-}
-
-func CompleteActivity(appID string, lastState string) {
-	taskToken, err := common.GetTokenByAppID(appID)
-	if err != nil {
-		fmt.Printf("Failed to find taskToken by error : %+v\n", err)
-	} else {
-
-		log.Printf("AppID: %v : TaskToken %v \n", appID, taskToken)
-
-		err = workflowClient.CompleteActivity(context.Background(), []byte(taskToken), lastState, nil)
-		if err != nil {
-			fmt.Printf("Failed to complete activity with error: %+v\n", err)
-		} else {
-			fmt.Printf("Successfully complete activity: %s\n", taskToken)
-		}
-	}
 }
