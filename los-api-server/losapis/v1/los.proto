@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package api.v1;
+
+option go_package = "losapis/v1/los";
+
+service LOS {
+  rpc Onboard (OnboardRequest) returns (OnboardResponse) {}
+}
+
+message OnboardRequest {
+  string appID = 1;
+}
+
+message OnboardResponse {
+  string appID = 1;
+}

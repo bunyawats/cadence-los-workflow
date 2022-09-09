@@ -43,4 +43,11 @@ export MONGO_URI=mongodb://localhost:27017/test \
 export RABBITMQ_URI="amqp://user:password@localhost:5672/" \
 export RABBITMQ_QUEUE=nlos
 
-go run ./mock-server  *.go
+go run ./los-api-server  *.go
+
+
+# generate go grpc with buf
+cd  los-api-server \
+buf generate  losapis
+
+
