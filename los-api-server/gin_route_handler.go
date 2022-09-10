@@ -7,9 +7,9 @@ import (
 	"net/http"
 )
 
-func NLOS_NotificationHandler(c *gin.Context) {
+func NlosNotificationHandler(c *gin.Context) {
 
-	fmt.Println("Call NLOS_NotificationHandler API")
+	fmt.Println("Call NlosNotificationHandler API")
 
 	var request common.DEResult
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -19,7 +19,7 @@ func NLOS_NotificationHandler(c *gin.Context) {
 		return
 	}
 
-	Publish2RabbitMQ(&request)
+	Publish2RabbitMQ(&request, queueName)
 
 	c.JSON(http.StatusOK, request)
 }

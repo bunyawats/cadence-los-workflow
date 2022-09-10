@@ -5,15 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/streadway/amqp"
-	"os"
 )
 
-func Publish2RabbitMQ(payload *common.DEResult) {
+func Publish2RabbitMQ(payload *common.DEResult, queueName string) {
 
 	data, _ := json.Marshal(payload)
 	err := publishChannelAmqp.Publish(
 		"",
-		os.Getenv(rabbitMqQueue),
+		queueName,
 		false,
 		false,
 		amqp.Publishing{

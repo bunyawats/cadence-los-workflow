@@ -26,8 +26,8 @@ const (
 
 var (
 	publishChannelAmqp *amqp.Channel
-	consumeChannelAmqp *amqp.Channel
 	amqpConnection     *amqp.Connection
+	queueName          string
 
 	m              *common.MongodbHelper
 	h              common.LosHelper
@@ -36,12 +36,14 @@ var (
 
 func init() {
 
-	amqpConnection, err := amqp.Dial(os.Getenv(rabbitMqUri))
+	var err error
+	amqpConnection, err = amqp.Dial(os.Getenv(rabbitMqUri))
 	if err != nil {
 		log.Fatalln("rabbit mq error: ", os.Getenv(rabbitMqUri), err)
 	}
 	publishChannelAmqp, _ = amqpConnection.Channel()
 	log.Println("rabbit mq connected")
+	queueName = os.Getenv(rabbitMqQueue)
 
 	m = common.NewMongodbHelper(common.MongodbConfig{
 		MongoUri:      os.Getenv(mongoUri),
@@ -65,7 +67,7 @@ func main() {
 func runGin() error {
 	router := gin.Default()
 
-	router.POST("/nlos/notification/de_one", NLOS_NotificationHandler)
+	router.POST("/nlos/notification/de_one", NlosNotificationHandler)
 	router.POST("/nlos/create/application/:appId", CreateNewLoanApplicationHandler)
 	router.POST("/nlos/submit/form_one/:appId", SubmitFormOneHandler)
 	router.POST("/nlos/submit/form_two/:appId", SubmitFormTwoHandler)
