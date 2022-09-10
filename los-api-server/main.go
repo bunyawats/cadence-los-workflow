@@ -1,16 +1,60 @@
 package main
 
 import (
+	"cadence-los-workflow/common"
 	los "cadence-los-workflow/los-api-server/losapis/gen/v1"
 	v1 "cadence-los-workflow/los-api-server/losapis/impl/v1"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/streadway/amqp"
+	cadence_client "go.uber.org/cadence/client"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
+	"os"
 )
+
+const (
+	rabbitMqUri   = "RABBITMQ_URI"
+	rabbitMqQueue = "RABBITMQ_QUEUE"
+
+	mongoUri      = "MONGO_URI"
+	mongoDatabase = "MONGO_DATABASE"
+)
+
+var (
+	publishChannelAmqp *amqp.Channel
+	consumeChannelAmqp *amqp.Channel
+	amqpConnection     *amqp.Connection
+
+	m              *common.MongodbHelper
+	h              common.LosHelper
+	workflowClient cadence_client.Client
+)
+
+func init() {
+
+	amqpConnection, err := amqp.Dial(os.Getenv(rabbitMqUri))
+	if err != nil {
+		log.Fatalln("rabbit mq error: ", os.Getenv(rabbitMqUri), err)
+	}
+	publishChannelAmqp, _ = amqpConnection.Channel()
+	log.Println("rabbit mq connected")
+
+	m = common.NewMongodbHelper(common.MongodbConfig{
+		MongoUri:      os.Getenv(mongoUri),
+		MongoDatabase: os.Getenv(mongoDatabase),
+	})
+
+	h.SetupServiceConfig()
+
+	workflowClient, err = h.Builder.BuildCadenceClient()
+	if err != nil {
+		panic(err)
+	}
+}
 
 func main() {
 

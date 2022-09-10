@@ -5,32 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/streadway/amqp"
-	"log"
 	"os"
 )
-
-const (
-	rabbitMqUri   = "RABBITMQ_URI"
-	rabbitMqQueue = "RABBITMQ_QUEUE"
-)
-
-var (
-	publishChannelAmqp *amqp.Channel
-	consumeChannelAmqp *amqp.Channel
-	amqpConnection     *amqp.Connection
-)
-
-func init() {
-
-	amqpConnection, err := amqp.Dial(os.Getenv(rabbitMqUri))
-	if err != nil {
-		log.Fatalln("rabbit mq error: ", os.Getenv(rabbitMqUri), err)
-	}
-	publishChannelAmqp, _ = amqpConnection.Channel()
-	log.Println("rabbit mq connected")
-
-	//	ConsumeRabbitMqMessage()
-}
 
 func Publish2RabbitMQ(payload *common.DEResult) {
 

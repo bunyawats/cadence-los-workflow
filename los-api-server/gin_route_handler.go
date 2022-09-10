@@ -4,36 +4,8 @@ import (
 	"cadence-los-workflow/common"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	cadence_client "go.uber.org/cadence/client"
 	"net/http"
-	"os"
 )
-
-const (
-	mongoUri      = "MONGO_URI"
-	mongoDatabase = "MONGO_DATABASE"
-)
-
-var (
-	m              *common.MongodbHelper
-	h              common.LosHelper
-	workflowClient cadence_client.Client
-)
-
-func init() {
-
-	m = common.NewMongodbHelper(common.MongodbConfig{
-		MongoUri:      os.Getenv(mongoUri),
-		MongoDatabase: os.Getenv(mongoDatabase),
-	})
-
-	h.SetupServiceConfig()
-	var err error
-	workflowClient, err = h.Builder.BuildCadenceClient()
-	if err != nil {
-		panic(err)
-	}
-}
 
 func NLOS_NotificationHandler(c *gin.Context) {
 
