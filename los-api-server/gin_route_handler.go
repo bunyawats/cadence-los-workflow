@@ -4,10 +4,20 @@ import (
 	"cadence-los-workflow/common"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	cadence_client "go.uber.org/cadence/client"
 	"net/http"
 )
 
-func NlosNotificationHandler(c *gin.Context) {
+type (
+	GinHandlerHelper struct {
+		M *common.MongodbHelper
+		R *common.RabbitMqHelper
+		H *common.LosHelper
+		W cadence_client.Client
+	}
+)
+
+func (g GinHandlerHelper) NlosNotificationHandler(c *gin.Context) {
 
 	fmt.Println("Call NlosNotificationHandler API")
 
@@ -19,31 +29,31 @@ func NlosNotificationHandler(c *gin.Context) {
 		return
 	}
 
-	Publish2RabbitMQ(&request, queueName)
+	g.R.Publish2RabbitMQ(&request)
 
 	c.JSON(http.StatusOK, request)
 }
 
-func CreateNewLoanApplicationHandler(c *gin.Context) {
+func (g GinHandlerHelper) CreateNewLoanApplicationHandler(c *gin.Context) {
 
 	fmt.Println("Call SubmitFormOneHandler API")
 
 	appID := c.Param("appId")
 
-	if err := m.CreateNewLoanApplication(appID); err != nil {
+	if err := g.M.CreateNewLoanApplication(appID); err != nil {
 		c.JSON(http.StatusConflict, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 
-	common.StartWorkflow(&h, appID)
+	common.StartWorkflow(g.H, appID)
 	c.JSON(http.StatusOK, gin.H{
 		"appID": appID,
 	})
 }
 
-func SubmitFormOneHandler(c *gin.Context) {
+func (g GinHandlerHelper) SubmitFormOneHandler(c *gin.Context) {
 
 	fmt.Println("Call SubmitFormOneHandler API")
 
@@ -56,7 +66,7 @@ func SubmitFormOneHandler(c *gin.Context) {
 	}
 	request.AppID = c.Param("appId")
 
-	loanApp, err := m.SaveFormOne(&request)
+	loanApp, err := g.M.SaveFormOne(&request)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -64,12 +74,12 @@ func SubmitFormOneHandler(c *gin.Context) {
 		return
 	}
 
-	common.CompleteActivity(m, workflowClient, request.AppID, "SUCCESS")
+	common.CompleteActivity(g.M, g.W, request.AppID, "SUCCESS")
 
 	c.JSON(http.StatusOK, loanApp)
 }
 
-func SubmitFormTwoHandler(c *gin.Context) {
+func (g GinHandlerHelper) SubmitFormTwoHandler(c *gin.Context) {
 
 	fmt.Println("Call SubmitFormTwoHandler API")
 
@@ -82,7 +92,7 @@ func SubmitFormTwoHandler(c *gin.Context) {
 	}
 	request.AppID = c.Param("appId")
 
-	loanApp, err := m.SaveFormTwo(&request)
+	loanApp, err := g.M.SaveFormTwo(&request)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -90,17 +100,17 @@ func SubmitFormTwoHandler(c *gin.Context) {
 		return
 	}
 
-	common.CompleteActivity(m, workflowClient, request.AppID, "SUCCESS")
+	common.CompleteActivity(g.M, g.W, request.AppID, "SUCCESS")
 
 	c.JSON(http.StatusOK, loanApp)
 }
 
-func QueryStateHandler(c *gin.Context) {
+func (g GinHandlerHelper) QueryStateHandler(c *gin.Context) {
 
 	fmt.Println("Call QueryStateHandler API")
 
 	appID := c.Param("appId")
-	taskToken := common.QueryApplicationState(m, &h, appID)
+	taskToken := common.QueryApplicationState(g.M, g.H, appID)
 	if taskToken != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"app_id":      appID,

@@ -11,24 +11,29 @@ const (
 )
 
 var (
-	m *common.MongodbHelper
-	h common.LosHelper
+	w LosWorkFlowHelper
 )
 
 func init() {
 
-	m = common.NewMongodbHelper(common.MongodbConfig{
+	m := common.NewMongodbHelper(common.MongodbConfig{
 		MongoUri:      os.Getenv(mongoUri),
 		MongoDatabase: os.Getenv(mongoDatabase),
 	})
 
+	var h common.LosHelper
 	h.SetupServiceConfig()
+
+	w = LosWorkFlowHelper{
+		M: m,
+		H: &h,
+	}
 }
 
 func main() {
 
-	RegisterWorkflowAndActivity(&h)
-	StartWorkers(&h)
+	w.RegisterWorkflowAndActivity()
+	w.StartWorkers()
 
 	select {}
 }

@@ -7,8 +7,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/streadway/amqp"
-	cadence_client "go.uber.org/cadence/client"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
@@ -25,37 +23,37 @@ const (
 )
 
 var (
-	publishChannelAmqp *amqp.Channel
-	amqpConnection     *amqp.Connection
-	queueName          string
-
-	m              *common.MongodbHelper
-	h              common.LosHelper
-	workflowClient cadence_client.Client
+	g GinHandlerHelper
 )
 
 func init() {
 
-	var err error
-	amqpConnection, err = amqp.Dial(os.Getenv(rabbitMqUri))
-	if err != nil {
-		log.Fatalln("rabbit mq error: ", os.Getenv(rabbitMqUri), err)
-	}
-	publishChannelAmqp, _ = amqpConnection.Channel()
-	log.Println("rabbit mq connected")
-	queueName = os.Getenv(rabbitMqQueue)
+	r := common.NewRabbitMqHelper(common.RabbitMqConfig{
+		RabbitMqUri:   os.Getenv(rabbitMqUri),
+		RabbitMqQueue: os.Getenv(rabbitMqQueue),
+	})
 
-	m = common.NewMongodbHelper(common.MongodbConfig{
+	m := common.NewMongodbHelper(common.MongodbConfig{
 		MongoUri:      os.Getenv(mongoUri),
 		MongoDatabase: os.Getenv(mongoDatabase),
 	})
 
+	var h common.LosHelper
 	h.SetupServiceConfig()
 
-	workflowClient, err = h.Builder.BuildCadenceClient()
+	var err error
+	workflowClient, err := h.Builder.BuildCadenceClient()
 	if err != nil {
 		panic(err)
 	}
+
+	g = GinHandlerHelper{
+		M: m,
+		R: r,
+		H: &h,
+		W: workflowClient,
+	}
+
 }
 
 func main() {
@@ -67,11 +65,11 @@ func main() {
 func runGin() error {
 	router := gin.Default()
 
-	router.POST("/nlos/notification/de_one", NlosNotificationHandler)
-	router.POST("/nlos/create/application/:appId", CreateNewLoanApplicationHandler)
-	router.POST("/nlos/submit/form_one/:appId", SubmitFormOneHandler)
-	router.POST("/nlos/submit/form_two/:appId", SubmitFormTwoHandler)
-	router.GET("/nlos/query/state/:appId", QueryStateHandler)
+	router.POST("/nlos/notification/de_one", g.NlosNotificationHandler)
+	router.POST("/nlos/create/application/:appId", g.CreateNewLoanApplicationHandler)
+	router.POST("/nlos/submit/form_one/:appId", g.SubmitFormOneHandler)
+	router.POST("/nlos/submit/form_two/:appId", g.SubmitFormTwoHandler)
+	router.GET("/nlos/query/state/:appId", g.QueryStateHandler)
 
 	log.Printf(" [*] Waiting for message. To exit press CYRL+C")
 	err := router.Run(":5500")
