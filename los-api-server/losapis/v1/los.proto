@@ -5,13 +5,68 @@ package api.v1;
 option go_package = "losapis/v1/los";
 
 service LOS {
-  rpc Onboard (OnboardRequest) returns (OnboardResponse) {}
+  rpc CreateNewApp(CreateNewAppRequest) returns (CreateNewAppResponse){}
+  rpc SubmitFormOne(SubmitFormOneRequest) returns (SubmitFormOneResponse) {}
+  rpc SubmitFormTwo(SubmitFormTwoRequest) returns (SubmitFormTwoResponse) {}
+  rpc NotificationDE1(NotificationDE1Request) returns (NotificationDE1Response) {}
+  rpc QueryState(QueryStateRequest) returns (QueryStateResponse) {}
+
 }
 
-message OnboardRequest {
+message LoanApplication{
+  string appID = 1;
+  string fName = 2;
+  string lName = 3;
+  string email = 4;
+  string phoneNo = 5;
+  string taskToken = 6;
+  string lastState = 7;
+}
+
+message LoanAppState{
+  string appID = 1;
+  string runID = 2;
+  string workflowID = 3;
+  string state = 4;
+}
+
+message CreateNewAppRequest {
+  string appID = 1;
+}
+message CreateNewAppResponse {
   string appID = 1;
 }
 
-message OnboardResponse {
+message SubmitFormOneRequest {
   string appID = 1;
+  string fName = 2;
+  string lnNme = 3;
+}
+message SubmitFormOneResponse {
+    LoanApplication loanApp = 1;
+}
+
+message SubmitFormTwoRequest {
+  string appID = 1;
+  string email = 2;
+  string phoneNo = 3;
+}
+message SubmitFormTwoResponse {
+  LoanApplication loanApp = 1;
+}
+
+message NotificationDE1Request{
+  string appID = 1;
+  string status = 2;
+}
+message NotificationDE1Response {
+  string appID = 1;
+  string status = 2;
+}
+
+message QueryStateRequest {
+  string appID = 1;
+}
+message QueryStateResponse {
+    LoanAppState loanAppState = 1;
 }
