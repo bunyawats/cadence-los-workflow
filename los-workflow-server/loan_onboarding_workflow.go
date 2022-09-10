@@ -7,7 +7,6 @@ import (
 	"go.uber.org/cadence/activity"
 	"go.uber.org/cadence/client"
 	"go.uber.org/cadence/worker"
-	"os"
 	"time"
 
 	"go.uber.org/cadence/workflow"
@@ -17,23 +16,7 @@ import (
 const (
 	applicationName            = "loanOnBoardingGroup"
 	loanOnBoardingWorkflowName = "loanOnBoardingWorkflow"
-
-	mongoUri      = "MONGO_URI"
-	mongoDatabase = "MONGO_DATABASE"
 )
-
-var (
-	m *los_common.MongodbHelper
-)
-
-func init() {
-
-	m = los_common.NewMongodbHelper(los_common.MongodbConfig{
-		MongoUri:      os.Getenv(mongoUri),
-		MongoDatabase: os.Getenv(mongoDatabase),
-	})
-
-}
 
 func StartWorkers(h *los_common.LosHelper) {
 	// Configure worker options.

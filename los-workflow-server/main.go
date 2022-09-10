@@ -2,11 +2,26 @@ package main
 
 import (
 	"cadence-los-workflow/common"
+	"os"
 )
 
-var h common.LosHelper
+const (
+	mongoUri      = "MONGO_URI"
+	mongoDatabase = "MONGO_DATABASE"
+)
+
+var (
+	m *common.MongodbHelper
+	h common.LosHelper
+)
 
 func init() {
+
+	m = common.NewMongodbHelper(common.MongodbConfig{
+		MongoUri:      os.Getenv(mongoUri),
+		MongoDatabase: os.Getenv(mongoDatabase),
+	})
+
 	h.SetupServiceConfig()
 }
 
