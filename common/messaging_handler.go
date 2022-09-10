@@ -6,14 +6,12 @@ import (
 	"github.com/streadway/amqp"
 	cadence_client "go.uber.org/cadence/client"
 	"log"
-	"os"
 )
 
 type (
 	RabbitMqHelper struct {
 		amqpConnection *amqp.Connection
-		//publishChannelAmqp *amqp.Channel
-		queueName string
+		queueName      string
 	}
 
 	RabbitMqConfig struct {
@@ -32,10 +30,11 @@ func NewRabbitMqHelper(config RabbitMqConfig) *RabbitMqHelper {
 	log.Println("rabbit mq connected")
 	queueName := config.RabbitMqQueue
 
+	fmt.Printf("\n RabbitMqUri: %v \n RabbitMqQueue: %v\n", config.RabbitMqUri, config.RabbitMqQueue)
+
 	return &RabbitMqHelper{
 		amqpConnection: amqpConnection,
-		//publishChannelAmqp: publishChannelAmqp,
-		queueName: queueName,
+		queueName:      queueName,
 	}
 }
 
@@ -63,7 +62,7 @@ func (r *RabbitMqHelper) ConsumeRabbitMqMessage(m *MongodbHelper, workflowClient
 
 	consumeChannelAmqp, _ := r.amqpConnection.Channel()
 	msgs, _ := consumeChannelAmqp.Consume(
-		os.Getenv(r.queueName),
+		r.queueName,
 		"",
 		true,
 		false,
