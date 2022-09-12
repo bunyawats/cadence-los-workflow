@@ -24,6 +24,7 @@ const (
 
 var (
 	g GinHandlerHelper
+	l *v1.LosApiServer
 )
 
 func init() {
@@ -54,6 +55,14 @@ func init() {
 		W: workflowClient,
 	}
 
+	l = v1.NewLosApiServer(
+		context.Background(),
+		m,
+		r,
+		&h,
+		workflowClient,
+	)
+
 }
 
 func main() {
@@ -63,13 +72,9 @@ func main() {
 }
 
 func runGin() error {
-	router := gin.Default()
 
-	router.POST("/nlos/notification/de_one", g.NlosNotificationHandler)
-	router.POST("/nlos/create/application/:appId", g.CreateNewLoanApplicationHandler)
-	router.POST("/nlos/submit/form_one/:appId", g.SubmitFormOneHandler)
-	router.POST("/nlos/submit/form_two/:appId", g.SubmitFormTwoHandler)
-	router.GET("/nlos/query/state/:appId", g.QueryStateHandler)
+	router := gin.Default()
+	g.RegisterRouter(router)
 
 	log.Printf(" [*] Waiting for message. To exit press CYRL+C")
 	err := router.Run(":5500")
@@ -90,9 +95,7 @@ func runGrpc() error {
 	reflection.Register(server)
 	los.RegisterLOSServer(
 		server,
-		v1.NewLosApiServer(
-			context.Background(),
-		),
+		l,
 	)
 
 	log.Println("Listening on", listenOn)

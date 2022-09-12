@@ -17,21 +17,13 @@ type (
 	}
 )
 
-func (g GinHandlerHelper) NlosNotificationHandler(c *gin.Context) {
+func (g GinHandlerHelper) RegisterRouter(r *gin.Engine) {
 
-	fmt.Println("Call NlosNotificationHandler API")
-
-	var request common.DEResult
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	g.R.Publish2RabbitMQ(&request)
-
-	c.JSON(http.StatusOK, request)
+	r.POST("/nlos/create/application/:appId", g.CreateNewLoanApplicationHandler)
+	r.POST("/nlos/submit/form_one/:appId", g.SubmitFormOneHandler)
+	r.POST("/nlos/submit/form_two/:appId", g.SubmitFormTwoHandler)
+	r.POST("/nlos/notification/de_one", g.NlosNotificationHandler)
+	r.GET("/nlos/query/state/:appId", g.QueryStateHandler)
 }
 
 func (g GinHandlerHelper) CreateNewLoanApplicationHandler(c *gin.Context) {
@@ -103,6 +95,23 @@ func (g GinHandlerHelper) SubmitFormTwoHandler(c *gin.Context) {
 	common.CompleteActivity(g.M, g.W, request.AppID, "SUCCESS")
 
 	c.JSON(http.StatusOK, loanApp)
+}
+
+func (g GinHandlerHelper) NlosNotificationHandler(c *gin.Context) {
+
+	fmt.Println("Call NlosNotificationHandler API")
+
+	var request common.DEResult
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	g.R.Publish2RabbitMQ(&request)
+
+	c.JSON(http.StatusOK, request)
 }
 
 func (g GinHandlerHelper) QueryStateHandler(c *gin.Context) {

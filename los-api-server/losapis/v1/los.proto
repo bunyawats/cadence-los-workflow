@@ -40,7 +40,7 @@ message CreateNewAppResponse {
 message SubmitFormOneRequest {
   string appID = 1;
   string fName = 2;
-  string lnNme = 3;
+  string lName = 3;
 }
 message SubmitFormOneResponse {
     LoanApplication loanApp = 1;
