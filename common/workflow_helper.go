@@ -5,25 +5,22 @@ import (
 	"fmt"
 	"github.com/pborman/uuid"
 	cadence_client "go.uber.org/cadence/client"
+	"go.uber.org/cadence/workflow"
 	"go.uber.org/zap"
 	"log"
 	"time"
 )
 
-const (
-	applicationName            = "loanOnBoardingGroup"
-	loanOnBoardingWorkflowName = "loanOnBoardingWorkflow"
-)
-
-func StartWorkflow(h *LosHelper, appID string) {
+func StartWorkflow(h *LosHelper, appID string) *workflow.Execution {
 	workflowOptions := cadence_client.StartWorkflowOptions{
-		ID:                              "loan_on_boarding_" + uuid.New(),
-		TaskList:                        applicationName,
+		ID:                              "los_" + uuid.New(),
+		TaskList:                        ApplicationName,
 		ExecutionStartToCloseTimeout:    10 * time.Minute,
 		DecisionTaskStartToCloseTimeout: 10 * time.Minute,
 	}
-	execution := h.StartWorkflow(workflowOptions, loanOnBoardingWorkflowName, appID)
-	log.Println("Started work flow!", zap.String("WorkflowId", execution.ID), zap.String("RunId", execution.RunID))
+	execution := h.StartWorkflow(workflowOptions, LoanOnBoardingWorkflowName, appID)
+	h.Logger.Info("Started work flow!", zap.String("WorkflowId", execution.ID), zap.String("RunId", execution.RunID))
+	return execution
 }
 
 func CompleteActivity(m *MongodbHelper, workflowClient cadence_client.Client, appID string, lastState string) {
@@ -43,23 +40,21 @@ func CompleteActivity(m *MongodbHelper, workflowClient cadence_client.Client, ap
 	}
 }
 
-func QueryApplicationState(m *MongodbHelper, h *LosHelper, appID string) *TaskToken {
+func QueryApplicationState(m *MongodbHelper, h *LosHelper, appID string) *QueryResult {
 
 	taskTokenStr, err := m.GetTokenByAppID(appID)
-
-	var taskToken *TaskToken
 
 	if err != nil {
 		return nil
 	}
 
-	taskToken = DeserializeTaskToken([]byte(taskTokenStr))
+	taskToken := DeserializeTaskToken([]byte(taskTokenStr))
 
-	taskToken.State = h.QueryWorkflow(
-		taskToken.WorkflowID,
-		taskToken.RunID,
-		"state",
-	)
+	var result QueryResult
+	err = h.ConsistentQueryWorkflow(&result, taskToken.WorkflowID, taskToken.RunID, QueryName, true)
+	if err != nil {
+		panic("failed to query workflow")
+	}
 
-	return taskToken
+	return &result
 }

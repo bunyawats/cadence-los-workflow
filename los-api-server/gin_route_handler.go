@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	cadence_client "go.uber.org/cadence/client"
 	"net/http"
+	"time"
 )
 
 type (
@@ -19,11 +20,67 @@ type (
 
 func (g GinHandlerHelper) RegisterRouter(r *gin.Engine) {
 
+	r.POST("/nlos/autorun/application/:appId", g.AutoRunLosWorkflownHandler)
+
 	r.POST("/nlos/create/application/:appId", g.CreateNewLoanApplicationHandler)
 	r.POST("/nlos/submit/form_one/:appId", g.SubmitFormOneHandler)
 	r.POST("/nlos/submit/form_two/:appId", g.SubmitFormTwoHandler)
 	r.POST("/nlos/notification/de_one", g.NlosNotificationHandler)
 	r.GET("/nlos/query/state/:appId", g.QueryStateHandler)
+}
+
+func assertState(expected, actual common.State) {
+	if expected != actual {
+		message := fmt.Sprintf("Workflow in wrong state. Expected %v Actual %v", expected, actual)
+		panic(message)
+	}
+}
+
+func (g GinHandlerHelper) AutoRunLosWorkflownHandler(c *gin.Context) {
+
+	fmt.Println("Call SubmitFormOneHandler API")
+
+	appID := c.Param("appId")
+
+	if err := g.M.CreateNewLoanApplication(appID); err != nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ex := common.StartWorkflow(g.H, appID)
+
+	g.H.SignalWorkflow(ex.ID, common.SignalName, &common.SignalPayload{Action: common.Create})
+	time.Sleep(time.Second * 5)
+	state := common.QueryApplicationState(g.M, g.H, appID)
+	assertState(common.Created, state.State)
+
+	g.H.SignalWorkflow(ex.ID, common.SignalName, &common.SignalPayload{Action: common.SubmitFormOne})
+	time.Sleep(time.Second * 5)
+	state = common.QueryApplicationState(g.M, g.H, appID)
+	assertState(common.FormOneSubmitted, state.State)
+
+	g.H.SignalWorkflow(ex.ID, common.SignalName, &common.SignalPayload{Action: common.SubmitFormTwo})
+	time.Sleep(time.Second * 5)
+	state = common.QueryApplicationState(g.M, g.H, appID)
+	assertState(common.FormTwoSubmitted, state.State)
+
+	g.H.SignalWorkflow(ex.ID, common.SignalName, &common.SignalPayload{Action: common.SubmitDEOne})
+	time.Sleep(time.Second * 5)
+	state = common.QueryApplicationState(g.M, g.H, appID)
+	assertState(common.DEOneSubmitted, state.State)
+
+	content := common.Approve
+	g.H.SignalWorkflow(ex.ID, common.SignalName, &common.SignalPayload{Action: common.DEOneResultNotification, Content: content})
+	time.Sleep(time.Second * 5)
+	state = common.QueryApplicationState(g.M, g.H, appID)
+	fmt.Printf("current state: %v", state)
+
+	c.JSON(http.StatusOK, gin.H{
+		"appID": appID,
+		"state": state,
+	})
 }
 
 func (g GinHandlerHelper) CreateNewLoanApplicationHandler(c *gin.Context) {
@@ -40,8 +97,13 @@ func (g GinHandlerHelper) CreateNewLoanApplicationHandler(c *gin.Context) {
 	}
 
 	common.StartWorkflow(g.H, appID)
+	state := common.QueryApplicationState(g.M, g.H, appID)
+	fmt.Println(state)
+
 	c.JSON(http.StatusOK, gin.H{
-		"appID": appID,
+		"appID":   appID,
+		"state":   state.State,
+		"content": state.Content,
 	})
 }
 
@@ -119,13 +181,12 @@ func (g GinHandlerHelper) QueryStateHandler(c *gin.Context) {
 	fmt.Println("Call QueryStateHandler API")
 
 	appID := c.Param("appId")
-	taskToken := common.QueryApplicationState(g.M, g.H, appID)
-	if taskToken != nil {
+	queryResult := common.QueryApplicationState(g.M, g.H, appID)
+	if queryResult != nil {
 		c.JSON(http.StatusOK, gin.H{
-			"app_id":      appID,
-			"workflow_id": taskToken.WorkflowID,
-			"run_id":      taskToken.RunID,
-			"state":       taskToken.State,
+			"app_id":  appID,
+			"content": queryResult.Content,
+			"state":   queryResult.State,
 		})
 		return
 	}

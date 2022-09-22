@@ -5,20 +5,20 @@ go build -o los-workflow *.go
 
 # first time build
 
-git submodule update --init\
+git submodule update --init
 
 # create database schema
 
-SQL_USER=root SQL_PASSWORD=password make install-schema-mysql\
+SQL_USER=root SQL_PASSWORD=password make install-schema-mysql
 
 # start cadence
 
 cd cadence\
-./cadence-server --zone mysql start \
+./cadence-server --zone mysql start 
 
 # register samples-domain
 
-./cadence --do samples-domain d re \
+./cadence --do samples-domain d re 
 
 # start cadence-web
 
@@ -28,7 +28,7 @@ http://localhost:8088/domains/samples-domain
 
 # build los workflow project
 
-go build -o los-workflow *.go
+go build -o los-workflow ./los-api-server/*.go
 
 
 # generate go grpc with buf

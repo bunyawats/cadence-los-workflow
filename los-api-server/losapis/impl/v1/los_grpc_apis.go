@@ -114,14 +114,13 @@ func (s *LosApiServer) NotificationDE1(_ context.Context, in *los.NotificationDE
 
 func (s *LosApiServer) QueryState(_ context.Context, in *los.QueryStateRequest) (*los.QueryStateResponse, error) {
 
-	taskToken := common.QueryApplicationState(s.M, s.H, in.AppID)
+	queryResult := common.QueryApplicationState(s.M, s.H, in.AppID)
 
 	return &los.QueryStateResponse{
 		LoanAppState: &los.LoanAppState{
 			AppID:      in.AppID,
-			RunID:      taskToken.RunID,
-			WorkflowID: taskToken.WorkflowID,
-			State:      taskToken.State,
+			WorkflowID: queryResult.Content,
+			State:      string(queryResult.State),
 		},
 	}, nil
 }
