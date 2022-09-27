@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/streadway/amqp"
-	cadence_client "go.uber.org/cadence/client"
 	"log"
+	"time"
 )
 
 type (
@@ -58,7 +58,7 @@ func (r *RabbitMqHelper) Publish2RabbitMQ(payload *DEResult) {
 	}
 }
 
-func (r *RabbitMqHelper) ConsumeRabbitMqMessage(m *MongodbHelper, workflowClient cadence_client.Client) {
+func (r *RabbitMqHelper) ConsumeRabbitMqMessage(m *MongodbHelper, h *LosHelper) {
 
 	consumeChannelAmqp, _ := r.amqpConnection.Channel()
 	msgs, _ := consumeChannelAmqp.Consume(
@@ -76,7 +76,23 @@ func (r *RabbitMqHelper) ConsumeRabbitMqMessage(m *MongodbHelper, workflowClient
 			var request DEResult
 			json.Unmarshal(d.Body, &request)
 
-			CompleteActivity(m, workflowClient, request.AppID, request.Status)
+			taskTokenStr, err := m.GetTokenByAppID(request.AppID)
+			if err != nil {
+				return
+			}
+
+			taskToken := DeserializeTaskToken([]byte(taskTokenStr))
+			h.SignalWorkflow(
+				taskToken.WorkflowID,
+				SignalName,
+				&SignalPayload{
+					Action:  DEOneResultNotification,
+					Content: Approve,
+				},
+			)
+			time.Sleep(time.Second * 5)
+			state := QueryApplicationState(m, h, request.AppID)
+			fmt.Printf("current state: %v", state)
 		}
 	}()
 }

@@ -29,14 +29,9 @@ func main() {
 	})
 
 	h.SetupServiceConfig()
-	var err error
-	workflowClient, err := h.Builder.BuildCadenceClient()
-	if err != nil {
-		panic(err)
-	}
 
 	fmt.Println("start messaging listener")
-	r.ConsumeRabbitMqMessage(m, workflowClient)
+	r.ConsumeRabbitMqMessage(m, &h)
 
 	select {}
 }

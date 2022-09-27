@@ -25,6 +25,7 @@ func (g GinHandlerHelper) RegisterRouter(r *gin.Engine) {
 	r.POST("/nlos/create/application/:appId", g.CreateNewLoanApplicationHandler)
 	r.POST("/nlos/submit/form_one/:appId", g.SubmitFormOneHandler)
 	r.POST("/nlos/submit/form_two/:appId", g.SubmitFormTwoHandler)
+	r.POST("/nlos/submit/de_one/:appId", g.SubmitDeOneHandler)
 	r.POST("/nlos/notification/de_one", g.NlosNotificationHandler)
 	r.GET("/nlos/query/state/:appId", g.QueryStateHandler)
 }
@@ -51,29 +52,59 @@ func (g GinHandlerHelper) AutoRunLosWorkflownHandler(c *gin.Context) {
 
 	ex := common.StartWorkflow(g.H, appID)
 
-	g.H.SignalWorkflow(ex.ID, common.SignalName, &common.SignalPayload{Action: common.Create})
-	time.Sleep(time.Second * 5)
+	g.H.SignalWorkflow(
+		ex.ID,
+		common.SignalName,
+		&common.SignalPayload{
+			Action: common.Create,
+		},
+	)
+	time.Sleep(time.Second)
 	state := common.QueryApplicationState(g.M, g.H, appID)
 	assertState(common.Created, state.State)
 
-	g.H.SignalWorkflow(ex.ID, common.SignalName, &common.SignalPayload{Action: common.SubmitFormOne})
-	time.Sleep(time.Second * 5)
+	g.H.SignalWorkflow(
+		ex.ID,
+		common.SignalName,
+		&common.SignalPayload{
+			Action: common.SubmitFormOne,
+		},
+	)
+	time.Sleep(time.Second)
 	state = common.QueryApplicationState(g.M, g.H, appID)
 	assertState(common.FormOneSubmitted, state.State)
 
-	g.H.SignalWorkflow(ex.ID, common.SignalName, &common.SignalPayload{Action: common.SubmitFormTwo})
-	time.Sleep(time.Second * 5)
+	g.H.SignalWorkflow(
+		ex.ID,
+		common.SignalName,
+		&common.SignalPayload{
+			Action: common.SubmitFormTwo,
+		},
+	)
+	time.Sleep(time.Second)
 	state = common.QueryApplicationState(g.M, g.H, appID)
 	assertState(common.FormTwoSubmitted, state.State)
 
-	g.H.SignalWorkflow(ex.ID, common.SignalName, &common.SignalPayload{Action: common.SubmitDEOne})
-	time.Sleep(time.Second * 5)
+	g.H.SignalWorkflow(
+		ex.ID,
+		common.SignalName,
+		&common.SignalPayload{
+			Action: common.SubmitDEOne,
+		},
+	)
+	time.Sleep(time.Second)
 	state = common.QueryApplicationState(g.M, g.H, appID)
 	assertState(common.DEOneSubmitted, state.State)
 
-	content := common.Approve
-	g.H.SignalWorkflow(ex.ID, common.SignalName, &common.SignalPayload{Action: common.DEOneResultNotification, Content: content})
-	time.Sleep(time.Second * 5)
+	g.H.SignalWorkflow(
+		ex.ID,
+		common.SignalName,
+		&common.SignalPayload{
+			Action:  common.DEOneResultNotification,
+			Content: common.Approve,
+		},
+	)
+	time.Sleep(time.Second)
 	state = common.QueryApplicationState(g.M, g.H, appID)
 	fmt.Printf("current state: %v", state)
 
@@ -96,9 +127,17 @@ func (g GinHandlerHelper) CreateNewLoanApplicationHandler(c *gin.Context) {
 		return
 	}
 
-	common.StartWorkflow(g.H, appID)
+	ex := common.StartWorkflow(g.H, appID)
+	g.H.SignalWorkflow(
+		ex.ID,
+		common.SignalName,
+		&common.SignalPayload{
+			Action: common.Create,
+		},
+	)
+	time.Sleep(time.Second)
 	state := common.QueryApplicationState(g.M, g.H, appID)
-	fmt.Println(state)
+	assertState(common.Created, state.State)
 
 	c.JSON(http.StatusOK, gin.H{
 		"appID":   appID,
@@ -128,7 +167,25 @@ func (g GinHandlerHelper) SubmitFormOneHandler(c *gin.Context) {
 		return
 	}
 
-	common.CompleteActivity(g.M, g.W, request.AppID, "SUCCESS")
+	taskTokenStr, err := g.M.GetTokenByAppID(request.AppID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	taskToken := common.DeserializeTaskToken([]byte(taskTokenStr))
+	g.H.SignalWorkflow(
+		taskToken.WorkflowID,
+		common.SignalName,
+		&common.SignalPayload{
+			Action: common.SubmitFormOne,
+		},
+	)
+	time.Sleep(time.Second)
+	state := common.QueryApplicationState(g.M, g.H, request.AppID)
+	assertState(common.FormOneSubmitted, state.State)
 
 	c.JSON(http.StatusOK, loanApp)
 }
@@ -154,9 +211,60 @@ func (g GinHandlerHelper) SubmitFormTwoHandler(c *gin.Context) {
 		return
 	}
 
-	common.CompleteActivity(g.M, g.W, request.AppID, "SUCCESS")
+	taskTokenStr, err := g.M.GetTokenByAppID(request.AppID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	taskToken := common.DeserializeTaskToken([]byte(taskTokenStr))
+	g.H.SignalWorkflow(
+		taskToken.WorkflowID,
+		common.SignalName,
+		&common.SignalPayload{
+			Action: common.SubmitFormTwo,
+		},
+	)
+	time.Sleep(time.Second)
+	state := common.QueryApplicationState(g.M, g.H, request.AppID)
+	assertState(common.FormTwoSubmitted, state.State)
 
 	c.JSON(http.StatusOK, loanApp)
+}
+
+func (g GinHandlerHelper) SubmitDeOneHandler(c *gin.Context) {
+
+	fmt.Println("Call SubmitDeOneHandler API")
+
+	appID := c.Param("appId")
+
+	taskTokenStr, err := g.M.GetTokenByAppID(appID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	taskToken := common.DeserializeTaskToken([]byte(taskTokenStr))
+	g.H.SignalWorkflow(
+		taskToken.WorkflowID,
+		common.SignalName,
+		&common.SignalPayload{
+			Action: common.SubmitDEOne,
+		},
+	)
+	time.Sleep(time.Second)
+	state := common.QueryApplicationState(g.M, g.H, appID)
+	assertState(common.DEOneSubmitted, state.State)
+
+	c.JSON(http.StatusOK, gin.H{
+		"appID":   appID,
+		"state":   state.State,
+		"content": state.Content,
+	})
 }
 
 func (g GinHandlerHelper) NlosNotificationHandler(c *gin.Context) {
@@ -172,8 +280,30 @@ func (g GinHandlerHelper) NlosNotificationHandler(c *gin.Context) {
 	}
 
 	g.R.Publish2RabbitMQ(&request)
+	taskTokenStr, err := g.M.GetTokenByAppID(request.AppID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
-	c.JSON(http.StatusOK, request)
+	taskToken := common.DeserializeTaskToken([]byte(taskTokenStr))
+	g.H.SignalWorkflow(
+		taskToken.WorkflowID,
+		common.SignalName,
+		&common.SignalPayload{
+			Action: common.SubmitDEOne,
+		},
+	)
+	time.Sleep(time.Second)
+	state := common.QueryApplicationState(g.M, g.H, request.AppID)
+
+	c.JSON(http.StatusOK, gin.H{
+		"appID":   request.AppID,
+		"state":   state.State,
+		"content": state.Content,
+	})
 }
 
 func (g GinHandlerHelper) QueryStateHandler(c *gin.Context) {

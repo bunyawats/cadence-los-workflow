@@ -43,7 +43,7 @@ message SubmitFormOneRequest {
   string lName = 3;
 }
 message SubmitFormOneResponse {
-    LoanApplication loanApp = 1;
+  LoanApplication loanApp = 1;
 }
 
 message SubmitFormTwoRequest {
@@ -68,5 +68,5 @@ message QueryStateRequest {
   string appID = 1;
 }
 message QueryStateResponse {
-    LoanAppState loanAppState = 1;
+  LoanAppState loanAppState = 1;
 }
