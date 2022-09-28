@@ -11,14 +11,14 @@ import (
 	"time"
 )
 
-func StartWorkflow(h *LosHelper, appID string) *workflow.Execution {
+func StartWorkflow(h *LosHelper) *workflow.Execution {
 	workflowOptions := cadence_client.StartWorkflowOptions{
 		ID:                              "los_" + uuid.New(),
 		TaskList:                        ApplicationName,
 		ExecutionStartToCloseTimeout:    10 * time.Minute,
 		DecisionTaskStartToCloseTimeout: 10 * time.Minute,
 	}
-	execution := h.StartWorkflow(workflowOptions, LoanOnBoardingWorkflowName, appID)
+	execution := h.StartWorkflow(workflowOptions, LoanOnBoardingWorkflowName)
 	h.Logger.Info("Started work flow!", zap.String("WorkflowId", execution.ID), zap.String("RunId", execution.RunID))
 	return execution
 }

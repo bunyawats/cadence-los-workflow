@@ -42,7 +42,7 @@ func (s *LosApiServer) CreateNewApp(_ context.Context, in *los.CreateNewAppReque
 		return nil, err
 	}
 
-	common.StartWorkflow(s.H, appID)
+	common.StartWorkflow(s.H)
 
 	return &los.CreateNewAppResponse{
 		AppID: appID,
@@ -118,9 +118,8 @@ func (s *LosApiServer) QueryState(_ context.Context, in *los.QueryStateRequest) 
 
 	return &los.QueryStateResponse{
 		LoanAppState: &los.LoanAppState{
-			AppID:      in.AppID,
-			WorkflowID: queryResult.Content,
-			State:      string(queryResult.State),
+			AppID: in.AppID,
+			State: string(queryResult.State),
 		},
 	}, nil
 }

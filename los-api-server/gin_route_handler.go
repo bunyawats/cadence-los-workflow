@@ -20,7 +20,7 @@ type (
 
 func (g GinHandlerHelper) RegisterRouter(r *gin.Engine) {
 
-	r.POST("/nlos/autorun/application/:appId", g.AutoRunLosWorkflownHandler)
+	r.POST("/nlos/autorun/application/:appId", g.AutoRunLosWorkflowHandler)
 
 	r.POST("/nlos/create/application/:appId", g.CreateNewLoanApplicationHandler)
 	r.POST("/nlos/submit/form_one/:appId", g.SubmitFormOneHandler)
@@ -37,26 +37,20 @@ func assertState(expected, actual common.State) {
 	}
 }
 
-func (g GinHandlerHelper) AutoRunLosWorkflownHandler(c *gin.Context) {
+func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 
 	fmt.Println("Call SubmitFormOneHandler API")
 
 	appID := c.Param("appId")
 
-	if err := g.M.CreateNewLoanApplication(appID); err != nil {
-		c.JSON(http.StatusConflict, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	ex := common.StartWorkflow(g.H, appID)
+	ex := common.StartWorkflow(g.H)
 
 	g.H.SignalWorkflow(
 		ex.ID,
 		common.SignalName,
 		&common.SignalPayload{
-			Action: common.Create,
+			Action:  common.Create,
+			Content: common.Content{"appID": appID},
 		},
 	)
 	time.Sleep(time.Second)
@@ -68,6 +62,11 @@ func (g GinHandlerHelper) AutoRunLosWorkflownHandler(c *gin.Context) {
 		common.SignalName,
 		&common.SignalPayload{
 			Action: common.SubmitFormOne,
+			Content: common.Content{
+				"appID": appID,
+				"fname": "bunyawat",
+				"lname": "singchai",
+			},
 		},
 	)
 	time.Sleep(time.Second)
@@ -79,6 +78,11 @@ func (g GinHandlerHelper) AutoRunLosWorkflownHandler(c *gin.Context) {
 		common.SignalName,
 		&common.SignalPayload{
 			Action: common.SubmitFormTwo,
+			Content: common.Content{
+				"appID":   appID,
+				"email":   "bunyawat.s@gmail.com",
+				"phoneNo": "0868372995",
+			},
 		},
 	)
 	time.Sleep(time.Second)
@@ -89,7 +93,8 @@ func (g GinHandlerHelper) AutoRunLosWorkflownHandler(c *gin.Context) {
 		ex.ID,
 		common.SignalName,
 		&common.SignalPayload{
-			Action: common.SubmitDEOne,
+			Action:  common.SubmitDEOne,
+			Content: common.Content{"appID": appID},
 		},
 	)
 	time.Sleep(time.Second)
@@ -100,8 +105,11 @@ func (g GinHandlerHelper) AutoRunLosWorkflownHandler(c *gin.Context) {
 		ex.ID,
 		common.SignalName,
 		&common.SignalPayload{
-			Action:  common.DEOneResultNotification,
-			Content: common.Approve,
+			Action: common.DEOneResultNotification,
+			Content: common.Content{
+				"appID":  appID,
+				"status": common.Approve,
+			},
 		},
 	)
 	time.Sleep(time.Second)
@@ -127,12 +135,13 @@ func (g GinHandlerHelper) CreateNewLoanApplicationHandler(c *gin.Context) {
 		return
 	}
 
-	ex := common.StartWorkflow(g.H, appID)
+	ex := common.StartWorkflow(g.H)
 	g.H.SignalWorkflow(
 		ex.ID,
 		common.SignalName,
 		&common.SignalPayload{
-			Action: common.Create,
+			Action:  common.Create,
+			Content: common.Content{"appID": appID},
 		},
 	)
 	time.Sleep(time.Second)
@@ -180,7 +189,8 @@ func (g GinHandlerHelper) SubmitFormOneHandler(c *gin.Context) {
 		taskToken.WorkflowID,
 		common.SignalName,
 		&common.SignalPayload{
-			Action: common.SubmitFormOne,
+			Action:  common.SubmitFormOne,
+			Content: common.Content{"appID": request.AppID},
 		},
 	)
 	time.Sleep(time.Second)

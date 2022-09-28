@@ -55,16 +55,17 @@ type (
 		LastState string `bson:"lastState" json:"lastState"`
 	}
 
-	State  string
-	Action string
+	State   string
+	Action  string
+	Content map[string]interface{}
 
 	QueryResult struct {
 		State   State
-		Content string
+		Content Content
 	}
 
 	SignalPayload struct {
 		Action  Action
-		Content string
+		Content Content
 	}
 )

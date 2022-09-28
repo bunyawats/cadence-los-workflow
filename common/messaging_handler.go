@@ -86,8 +86,11 @@ func (r *RabbitMqHelper) ConsumeRabbitMqMessage(m *MongodbHelper, h *LosHelper) 
 				taskToken.WorkflowID,
 				SignalName,
 				&SignalPayload{
-					Action:  DEOneResultNotification,
-					Content: Approve,
+					Action: DEOneResultNotification,
+					Content: Content{
+						"appID":  request.AppID,
+						"status": request.Status,
+					},
 				},
 			)
 			time.Sleep(time.Second * 5)
