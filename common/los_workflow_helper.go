@@ -317,7 +317,7 @@ func (h *LosHelper) SignalWorkflow(workflowID, signal string, data interface{}) 
 	err = workflowClient.SignalWorkflow(context.Background(), workflowID, "", signal, data)
 	if err != nil {
 		h.Logger.Error("Failed to signal workflow", zap.Error(err))
-		panic("Failed to signal workflow.")
+		//panic("Failed to signal workflow.")
 	}
 }
 

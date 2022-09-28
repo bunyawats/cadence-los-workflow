@@ -53,8 +53,8 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (los_com
 	ch := workflow.GetSignalChannel(ctx, los_common.SignalName)
 
 	ao := workflow.ActivityOptions{
-		ScheduleToStartTimeout: 5 * time.Minute,
-		StartToCloseTimeout:    5 * time.Minute,
+		ScheduleToStartTimeout: 10 * time.Minute,
+		StartToCloseTimeout:    10 * time.Minute,
 		//HeartbeatTimeout:       20 * time.Second,
 	}
 	ctx = workflow.WithActivityOptions(ctx, ao)

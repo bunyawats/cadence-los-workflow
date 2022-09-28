@@ -101,7 +101,7 @@ func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *los.SubmitFormTwoReq
 
 func (s *LosApiServer) NotificationDE1(_ context.Context, in *los.NotificationDE1Request) (*los.NotificationDE1Response, error) {
 
-	s.R.Publish2RabbitMQ(&common.DEResult{
+	s.R.PublishDEResult(&common.DEResult{
 		AppID:  in.AppID,
 		Status: in.Status,
 	})

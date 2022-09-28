@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	rabbitMqUri   = "RABBITMQ_URI"
-	rabbitMqQueue = "RABBITMQ_QUEUE"
+	rabbitMqUri      = "RABBITMQ_URI"
+	rabbitMqInQueue  = "RABBITMQ_IN_QUEUE"
+	rabbitMqOutQueue = "RABBITMQ_OUT_QUEUE"
 
 	mongoUri      = "MONGO_URI"
 	mongoDatabase = "MONGO_DATABASE"
@@ -19,8 +20,9 @@ func main() {
 	var h common.LosHelper
 
 	r := common.NewRabbitMqHelper(common.RabbitMqConfig{
-		RabbitMqUri:   os.Getenv(rabbitMqUri),
-		RabbitMqQueue: os.Getenv(rabbitMqQueue),
+		RabbitMqUri:  os.Getenv(rabbitMqUri),
+		InQueueName:  os.Getenv(rabbitMqInQueue),
+		OutQueueName: os.Getenv(rabbitMqOutQueue),
 	})
 
 	m := common.NewMongodbHelper(common.MongodbConfig{

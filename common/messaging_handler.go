@@ -11,12 +11,14 @@ import (
 type (
 	RabbitMqHelper struct {
 		amqpConnection *amqp.Connection
-		queueName      string
+		inQueueName    string
+		outQueueName   string
 	}
 
 	RabbitMqConfig struct {
-		RabbitMqUri   string
-		RabbitMqQueue string
+		RabbitMqUri  string
+		InQueueName  string
+		OutQueueName string
 	}
 )
 
@@ -28,24 +30,37 @@ func NewRabbitMqHelper(config RabbitMqConfig) *RabbitMqHelper {
 	}
 
 	log.Println("rabbit mq connected")
-	queueName := config.RabbitMqQueue
-
-	fmt.Printf("\n RabbitMqUri: %v \n RabbitMqQueue: %v\n", config.RabbitMqUri, config.RabbitMqQueue)
+	inQueueName := config.InQueueName
+	outQueueName := config.OutQueueName
 
 	return &RabbitMqHelper{
 		amqpConnection: amqpConnection,
-		queueName:      queueName,
+		inQueueName:    inQueueName,
+		outQueueName:   outQueueName,
 	}
 }
 
-func (r *RabbitMqHelper) Publish2RabbitMQ(payload *DEResult) {
+func (r *RabbitMqHelper) PublishAppDEOne(payload *LoanApplication) {
+
+	fmt.Println("Call PublishAppDEOne API", payload)
 
 	data, _ := json.Marshal(payload)
+	queueName := r.outQueueName
+	publishMessage(r, queueName, data)
+}
 
+func (r *RabbitMqHelper) PublishDEResult(payload *DEResult) {
+
+	data, _ := json.Marshal(payload)
+	queueName := r.inQueueName
+	publishMessage(r, queueName, data)
+}
+
+func publishMessage(r *RabbitMqHelper, queueName string, data []byte) {
 	publishChannelAmqp, _ := r.amqpConnection.Channel()
 	err := publishChannelAmqp.Publish(
 		"",
-		r.queueName,
+		queueName,
 		false,
 		false,
 		amqp.Publishing{
@@ -62,7 +77,7 @@ func (r *RabbitMqHelper) ConsumeRabbitMqMessage(m *MongodbHelper, h *LosHelper) 
 
 	consumeChannelAmqp, _ := r.amqpConnection.Channel()
 	msgs, _ := consumeChannelAmqp.Consume(
-		r.queueName,
+		r.inQueueName,
 		"",
 		true,
 		false,

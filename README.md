@@ -47,7 +47,8 @@ go run ./los-workflow-server/*.go
 export MONGO_DATABASE=test \
 export MONGO_URI=mongodb://localhost:27017/test \
 export RABBITMQ_URI="amqp://user:password@localhost:5672/" \
-export RABBITMQ_QUEUE=nlos
+export RABBITMQ_IN_QUEUE=nlos-in \
+export RABBITMQ_OUT_QUEUE=nlos-out
 
 go run ./los-api-server/*.go
 
@@ -56,7 +57,8 @@ go run ./los-api-server/*.go
 export MONGO_DATABASE=test \
 export MONGO_URI=mongodb://localhost:27017/test \
 export RABBITMQ_URI="amqp://user:password@localhost:5672/" \
-export RABBITMQ_QUEUE=nlos
+export RABBITMQ_IN_QUEUE=nlos-in \
+export RABBITMQ_OUT_QUEUE=nlos-out
 
 go run ./los-messaging-listener/*.go
 
