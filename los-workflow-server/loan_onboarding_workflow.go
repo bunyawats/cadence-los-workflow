@@ -215,6 +215,12 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (los_com
 	}
 }
 
+func (w LosWorkFlowHelper) updateCurrentState(ctx context.Context, loanAppID string, state string) {
+	activityInfo := activity.GetInfo(ctx)
+	taskToken := string(activityInfo.TaskToken)
+	w.M.UpdateLoanApplicationTaskToken(loanAppID, state, taskToken)
+}
+
 func (w LosWorkFlowHelper) createNewAppActivity(ctx context.Context, loanAppID string) (string, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++createNewAppActivity  started+++++\n " + loanAppID)
@@ -223,10 +229,7 @@ func (w LosWorkFlowHelper) createNewAppActivity(ctx context.Context, loanAppID s
 		return "FAIL", err
 	}
 
-	activityInfo := activity.GetInfo(ctx)
-	taskToken := string(activityInfo.TaskToken)
-
-	w.M.UpdateLoanApplicationTaskToken(loanAppID, "NEW_APPLICATION", taskToken)
+	w.updateCurrentState(ctx, loanAppID, "NEW_APPLICATION")
 
 	return "SUCCESS", nil
 }
@@ -239,10 +242,8 @@ func (w LosWorkFlowHelper) submitFormOneActivity(ctx context.Context, loanApp *l
 	if err != nil {
 		return "FAIL", err
 	}
-	activityInfo := activity.GetInfo(ctx)
-	taskToken := string(activityInfo.TaskToken)
 
-	w.M.UpdateLoanApplicationTaskToken(loanApp.AppID, "SUBMIT_FORM_ONE", taskToken)
+	w.updateCurrentState(ctx, loanApp.AppID, "SUBMIT_FORM_ONE")
 
 	return "SUCCESS", nil
 }
@@ -255,10 +256,8 @@ func (w LosWorkFlowHelper) submitFormTwoActivity(ctx context.Context, loanApp *l
 	if err != nil {
 		return "FAIL", err
 	}
-	activityInfo := activity.GetInfo(ctx)
-	taskToken := string(activityInfo.TaskToken)
 
-	w.M.UpdateLoanApplicationTaskToken(loanApp.AppID, "SUBMIT_FORM_TWO", taskToken)
+	w.updateCurrentState(ctx, loanApp.AppID, "SUBMIT_FORM_TWO")
 
 	return "SUCCESS", nil
 }
@@ -267,10 +266,14 @@ func (w LosWorkFlowHelper) submitDE1Activity(ctx context.Context, loanAppID stri
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++submitDE1Activity  started+++++\n" + loanAppID)
 
-	activityInfo := activity.GetInfo(ctx)
-	taskToken := string(activityInfo.TaskToken)
+	loanApp, err := w.M.GetLoanApplicationByAppID(loanAppID)
+	if err != nil {
+		return "FAIL", err
+	}
 
-	w.M.UpdateLoanApplicationTaskToken(loanAppID, "SUBMIT_DE_ONE", taskToken)
+	w.R.PublishAppDEOne(loanApp)
+
+	w.updateCurrentState(ctx, loanAppID, "SUBMIT_DE_ONE")
 
 	return "SUCCESS", nil
 }
@@ -279,17 +282,7 @@ func (w LosWorkFlowHelper) approveActivity(ctx context.Context, loanAppID string
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++approveActivity  started+++++\n" + loanAppID)
 
-	loanApp, err := w.M.GetLoanApplicationByAppID(loanAppID)
-	if err != nil {
-		return "FAIL", err
-	}
-
-	w.R.PublishAppDEOne(loanApp)
-
-	activityInfo := activity.GetInfo(ctx)
-	taskToken := string(activityInfo.TaskToken)
-
-	w.M.UpdateLoanApplicationTaskToken(loanAppID, "APPROVED", taskToken)
+	w.updateCurrentState(ctx, loanAppID, "APPROVED")
 
 	return "SUCCESS", nil
 }
@@ -298,10 +291,7 @@ func (w LosWorkFlowHelper) rejectActivity(ctx context.Context, loanAppID string)
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++rejectActivity  started+++++\n" + loanAppID)
 
-	activityInfo := activity.GetInfo(ctx)
-	taskToken := string(activityInfo.TaskToken)
-
-	w.M.UpdateLoanApplicationTaskToken(loanAppID, "REJECTED", taskToken)
+	w.updateCurrentState(ctx, loanAppID, "REJECTED")
 
 	return "SUCCESS", nil
 }
@@ -310,10 +300,7 @@ func (w LosWorkFlowHelper) cancelActivity(ctx context.Context, loanAppID string)
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++rejectActivity  started+++++\n" + loanAppID)
 
-	activityInfo := activity.GetInfo(ctx)
-	taskToken := string(activityInfo.TaskToken)
-
-	w.M.UpdateLoanApplicationTaskToken(loanAppID, "CANCELED", taskToken)
+	w.updateCurrentState(ctx, loanAppID, "CANCELED")
 
 	return "SUCCESS", nil
 }
