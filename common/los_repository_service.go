@@ -210,3 +210,19 @@ func (m *MongodbHelper) GetTokenByAppID(appID string) (string, error) {
 
 	return loanApplication.TaskToken, nil
 }
+
+func (m *MongodbHelper) GetLoanApplicationByAppID(appID string) (*LoanApplication, error) {
+
+	filter := bson.M{
+		"appID": bson.M{
+			"$eq": appID,
+		},
+	}
+
+	loanApplication := &LoanApplication{}
+	if err := m.mongoCollection.FindOne(m.ctx, filter).Decode(loanApplication); err != nil {
+		return nil, err
+	}
+
+	return loanApplication, nil
+}

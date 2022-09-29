@@ -236,16 +236,6 @@ func (g GinHandlerHelper) SubmitDeOneHandler(c *gin.Context) {
 
 	appID := c.Param("appId")
 
-	loanApp := &common.LoanApplication{
-		AppID:   c.Param("appId"),
-		Fname:   "bunyawat",
-		Lname:   "singchai",
-		Email:   "bunyawat.s@gmail.com",
-		PhoneNo: "0868372995",
-	}
-
-	g.R.PublishAppDEOne(loanApp)
-
 	taskTokenStr, err := g.M.GetTokenByAppID(appID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{

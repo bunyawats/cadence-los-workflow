@@ -19,6 +19,7 @@ type (
 	LosWorkFlowHelper struct {
 		M *los_common.MongodbHelper
 		H *los_common.LosHelper
+		R *los_common.RabbitMqHelper
 	}
 )
 
@@ -277,6 +278,13 @@ func (w LosWorkFlowHelper) submitDE1Activity(ctx context.Context, loanAppID stri
 func (w LosWorkFlowHelper) approveActivity(ctx context.Context, loanAppID string) (string, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++approveActivity  started+++++\n" + loanAppID)
+
+	loanApp, err := w.M.GetLoanApplicationByAppID(loanAppID)
+	if err != nil {
+		return "FAIL", err
+	}
+
+	w.R.PublishAppDEOne(loanApp)
 
 	activityInfo := activity.GetInfo(ctx)
 	taskToken := string(activityInfo.TaskToken)
