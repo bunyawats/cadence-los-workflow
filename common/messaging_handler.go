@@ -91,14 +91,14 @@ func (r *RabbitMqHelper) ConsumeRabbitMqMessage(m *MongodbHelper, h *LosHelper) 
 			var request DEResult
 			json.Unmarshal(d.Body, &request)
 
-			taskTokenStr, err := m.GetTokenByAppID(request.AppID)
+			loanApp, err := m.GetLoanApplicationByAppID(request.AppID)
 			if err != nil {
 				return
 			}
 
-			taskToken := DeserializeTaskToken([]byte(taskTokenStr))
+			//taskToken := DeserializeTaskToken([]byte(taskTokenStr))
 			h.SignalWorkflow(
-				taskToken.WorkflowID,
+				loanApp.WorkflowID,
 				SignalName,
 				&SignalPayload{
 					Action: DEOneResultNotification,

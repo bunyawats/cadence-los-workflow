@@ -42,16 +42,14 @@ func CompleteActivity(m *MongodbHelper, workflowClient cadence_client.Client, ap
 
 func QueryApplicationState(m *MongodbHelper, h *LosHelper, appID string) *QueryResult {
 
-	taskTokenStr, err := m.GetTokenByAppID(appID)
+	loanApp, err := m.GetLoanApplicationByAppID(appID)
 
 	if err != nil {
 		return nil
 	}
 
-	taskToken := DeserializeTaskToken([]byte(taskTokenStr))
-
 	var result QueryResult
-	err = h.ConsistentQueryWorkflow(&result, taskToken.WorkflowID, taskToken.RunID, QueryName, true)
+	err = h.ConsistentQueryWorkflow(&result, loanApp.WorkflowID, loanApp.RunID, QueryName, true)
 	if err != nil {
 		panic("failed to query workflow")
 	}

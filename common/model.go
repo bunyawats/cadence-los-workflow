@@ -46,13 +46,14 @@ type (
 	}
 
 	LoanApplication struct {
-		AppID     string `bson:"appID" json:"appID"`
-		Fname     string `bson:"fname" json:"fname"`
-		Lname     string `bson:"lname" json:"lname"`
-		Email     string `bson:"email" json:"email"`
-		PhoneNo   string `bson:"phoneNo" json:"phoneNo"`
-		TaskToken string `bson:"taskToken" json:"taskToken"`
-		LastState string `bson:"lastState" json:"lastState"`
+		AppID      string `bson:"appID" json:"appID"`
+		Fname      string `bson:"fname" json:"fname"`
+		Lname      string `bson:"lname" json:"lname"`
+		Email      string `bson:"email" json:"email"`
+		PhoneNo    string `bson:"phoneNo" json:"phoneNo"`
+		WorkflowID string `bson:"workflowID" json:"workflowID"`
+		RunID      string `bson:"runID" json:"runID"`
+		LastState  string `bson:"lastState" json:"lastState"`
 	}
 
 	State   string

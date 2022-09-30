@@ -44,7 +44,7 @@ func NewMongodbHelper(config MongodbConfig) *MongodbHelper {
 	}
 }
 
-func (m *MongodbHelper) UpdateLoanApplicationTaskToken(appID string, lastState string, taskToken string) error {
+func (m *MongodbHelper) UpdateLoanApplicationTaskToken(appID string, lastState string, workflowID string, runID string) error {
 
 	filter := bson.M{
 		"appID": bson.M{
@@ -54,8 +54,9 @@ func (m *MongodbHelper) UpdateLoanApplicationTaskToken(appID string, lastState s
 
 	update := bson.M{
 		"$set": bson.M{
-			"taskToken": taskToken,
-			"lastState": lastState,
+			"workflowID": workflowID,
+			"runID":      runID,
+			"lastState":  lastState,
 		},
 	}
 
@@ -208,7 +209,7 @@ func (m *MongodbHelper) GetTokenByAppID(appID string) (string, error) {
 		return "NA", err
 	}
 
-	return loanApplication.TaskToken, nil
+	return "NA", nil
 }
 
 func (m *MongodbHelper) GetLoanApplicationByAppID(appID string) (*LoanApplication, error) {

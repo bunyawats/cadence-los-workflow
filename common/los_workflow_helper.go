@@ -83,7 +83,6 @@ func (h *LosHelper) SetConfigFile(configFile string) {
 	h.configFile = configFile
 }
 
-// SetupServiceConfig setup the config for the sample code run
 func (h *LosHelper) SetupServiceConfig() {
 	if h.Service != nil {
 		return
@@ -246,10 +245,10 @@ func (h *LosHelper) RegisterActivityWithAlias(activity interface{}, alias string
 
 // StartWorkers starts workflow worker and activity worker based on configured options.
 func (h *LosHelper) StartWorkers(domainName string, groupName string, options worker.Options) {
-	worker := worker.New(h.Service, domainName, groupName, options)
-	h.registerWorkflowAndActivity(worker)
+	w := worker.New(h.Service, domainName, groupName, options)
+	h.registerWorkflowAndActivity(w)
 
-	err := worker.Start()
+	err := w.Start()
 	if err != nil {
 		h.Logger.Error("Failed to start workers.", zap.Error(err))
 		panic("Failed to start workers")

@@ -48,7 +48,13 @@ func (w LosWorkFlowHelper) RegisterWorkflowAndActivity() {
 	w.H.RegisterActivity(w.cancelActivity)
 }
 
-// helloWorkflow workflow decider
+func (w LosWorkFlowHelper) updateCurrentState(ctx workflow.Context, loanAppID string, state string) {
+	info := workflow.GetInfo(ctx)
+	workflowId := info.WorkflowExecution.ID
+	runID := info.WorkflowExecution.RunID
+	_ = w.M.UpdateLoanApplicationTaskToken(loanAppID, state, workflowId, runID)
+}
+
 func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (los_common.State, error) {
 
 	ch := workflow.GetSignalChannel(ctx, los_common.SignalName)
@@ -102,6 +108,8 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (los_com
 					} else {
 						logger.Info("State is now created.")
 						state = los_common.Created
+
+						w.updateCurrentState(ctx, appID.(string), string(state))
 					}
 
 				}
@@ -123,6 +131,8 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (los_com
 					} else {
 						logger.Info("State is now form one submitted.")
 						state = los_common.FormOneSubmitted
+
+						w.updateCurrentState(ctx, loanApp.AppID, string(state))
 					}
 				}
 			}
@@ -143,6 +153,8 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (los_com
 					} else {
 						logger.Info("State is now form two submitted.")
 						state = los_common.FormTwoSubmitted
+
+						w.updateCurrentState(ctx, loanApp.AppID, string(state))
 					}
 				}
 			}
@@ -157,6 +169,8 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (los_com
 					} else {
 						logger.Info("State is now deOneSubmitted.")
 						state = los_common.DEOneSubmitted
+
+						w.updateCurrentState(ctx, appID.(string), string(state))
 					}
 				}
 			}
@@ -165,29 +179,33 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (los_com
 			if signal.Content != nil {
 
 				appID := signal.Content["appID"]
-				status := signal.Content["status"]
+				deStatus := signal.Content["status"]
 
 				if state == los_common.DEOneSubmitted {
-					if status == los_common.Approve {
+					if deStatus == los_common.Approve {
 						err := workflow.ExecuteActivity(ctx, w.approveActivity, appID).Get(ctx, &activityResult)
 						if err != nil {
 							logger.Error("Failed to approve loan application.")
 						} else {
 							logger.Info("State is now approved.")
 							state = los_common.Approved
+
+							w.updateCurrentState(ctx, appID.(string), string(state))
 						}
 						return state, nil
-					} else if status == los_common.Reject {
+					} else if deStatus == los_common.Reject {
 						err := workflow.ExecuteActivity(ctx, w.rejectActivity, appID).Get(ctx, &activityResult)
 						if err != nil {
 							logger.Error("Failed to reject loan application.")
 						} else {
 							logger.Info("State is now rejected.")
 							state = los_common.Rejected
+
+							w.updateCurrentState(ctx, appID.(string), string(state))
 						}
 						return state, nil
 					} else {
-						logger.Error(fmt.Sprintf("Wrong DE result :%v.", status))
+						logger.Error(fmt.Sprintf("Wrong DE result :%v.", deStatus))
 					}
 				}
 			}
@@ -196,16 +214,19 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (los_com
 
 			if signal.Content != nil {
 
-				appId := signal.Content
+				appID := signal.Content["appID"]
 
-				if state != los_common.Approved || state != los_common.Rejected {
+				if state != los_common.Approved && state != los_common.Rejected {
 
-					err := workflow.ExecuteActivity(ctx, w.rejectActivity, appId).Get(ctx, &activityResult)
+					err := workflow.ExecuteActivity(ctx, w.rejectActivity, appID).Get(ctx, &activityResult)
 					if err != nil {
 						logger.Error("Failed to reject loan application.")
 					} else {
 						logger.Info("State is now canceled.")
 						state = los_common.Canceled
+
+						w.updateCurrentState(ctx, appID.(string), string(state))
+
 						return state, nil
 					}
 				}
@@ -215,12 +236,6 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (los_com
 	}
 }
 
-func (w LosWorkFlowHelper) updateCurrentState(ctx context.Context, loanAppID string, state string) {
-	activityInfo := activity.GetInfo(ctx)
-	taskToken := string(activityInfo.TaskToken)
-	w.M.UpdateLoanApplicationTaskToken(loanAppID, state, taskToken)
-}
-
 func (w LosWorkFlowHelper) createNewAppActivity(ctx context.Context, loanAppID string) (string, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++createNewAppActivity  started+++++\n " + loanAppID)
@@ -228,8 +243,6 @@ func (w LosWorkFlowHelper) createNewAppActivity(ctx context.Context, loanAppID s
 	if err := w.M.CreateNewLoanApplication(loanAppID); err != nil {
 		return "FAIL", err
 	}
-
-	w.updateCurrentState(ctx, loanAppID, "NEW_APPLICATION")
 
 	return "SUCCESS", nil
 }
@@ -243,8 +256,6 @@ func (w LosWorkFlowHelper) submitFormOneActivity(ctx context.Context, loanApp *l
 		return "FAIL", err
 	}
 
-	w.updateCurrentState(ctx, loanApp.AppID, "SUBMIT_FORM_ONE")
-
 	return "SUCCESS", nil
 }
 
@@ -256,8 +267,6 @@ func (w LosWorkFlowHelper) submitFormTwoActivity(ctx context.Context, loanApp *l
 	if err != nil {
 		return "FAIL", err
 	}
-
-	w.updateCurrentState(ctx, loanApp.AppID, "SUBMIT_FORM_TWO")
 
 	return "SUCCESS", nil
 }
@@ -273,16 +282,12 @@ func (w LosWorkFlowHelper) submitDE1Activity(ctx context.Context, loanAppID stri
 
 	w.R.PublishAppDEOne(loanApp)
 
-	w.updateCurrentState(ctx, loanAppID, "SUBMIT_DE_ONE")
-
 	return "SUCCESS", nil
 }
 
 func (w LosWorkFlowHelper) approveActivity(ctx context.Context, loanAppID string) (string, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++approveActivity  started+++++\n" + loanAppID)
-
-	w.updateCurrentState(ctx, loanAppID, "APPROVED")
 
 	return "SUCCESS", nil
 }
@@ -291,16 +296,12 @@ func (w LosWorkFlowHelper) rejectActivity(ctx context.Context, loanAppID string)
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++rejectActivity  started+++++\n" + loanAppID)
 
-	w.updateCurrentState(ctx, loanAppID, "REJECTED")
-
 	return "SUCCESS", nil
 }
 
 func (w LosWorkFlowHelper) cancelActivity(ctx context.Context, loanAppID string) (string, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++rejectActivity  started+++++\n" + loanAppID)
-
-	w.updateCurrentState(ctx, loanAppID, "CANCELED")
 
 	return "SUCCESS", nil
 }
