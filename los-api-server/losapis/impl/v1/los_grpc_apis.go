@@ -5,6 +5,7 @@ import (
 	los "cadence-los-workflow/los-api-server/losapis/gen/v1"
 	"context"
 	cadence_client "go.uber.org/cadence/client"
+	"time"
 )
 
 type LosApiServer struct {
@@ -38,11 +39,18 @@ func (s *LosApiServer) CreateNewApp(_ context.Context, in *los.CreateNewAppReque
 
 	appID := in.AppID
 
-	if err := s.M.CreateNewLoanApplication(appID); err != nil {
-		return nil, err
-	}
-
-	common.StartWorkflow(s.H)
+	ex := common.StartWorkflow(s.H)
+	s.H.SignalWorkflow(
+		ex.ID,
+		common.SignalName,
+		&common.SignalPayload{
+			Action:  common.Create,
+			Content: common.Content{"appID": appID},
+		},
+	)
+	time.Sleep(time.Second)
+	state := common.QueryApplicationState(s.M, s.H, appID)
+	common.AssertState(common.Created, state.State)
 
 	return &los.CreateNewAppResponse{
 		AppID: appID,
@@ -51,51 +59,104 @@ func (s *LosApiServer) CreateNewApp(_ context.Context, in *los.CreateNewAppReque
 
 func (s *LosApiServer) SubmitFormOne(_ context.Context, in *los.SubmitFormOneRequest) (*los.SubmitFormOneResponse, error) {
 
-	request := common.LoanApplication{
+	r := common.LoanApplication{
 		AppID: in.AppID,
 		Fname: in.FName,
 		Lname: in.LName,
 	}
 
-	a, err := s.M.SaveFormOne(&request)
+	id, err := s.M.GetWorkflowIdByAppID(r.AppID)
 	if err != nil {
 		return nil, err
 	}
 
-	common.CompleteActivity(s.M, s.W, in.AppID, "SUCCESS")
+	s.H.SignalWorkflow(
+		id,
+		common.SignalName,
+		&common.SignalPayload{
+			Action: common.SubmitFormOne,
+			Content: common.Content{
+				"appID": r.AppID,
+				"fname": r.Fname,
+				"lname": r.Lname,
+			},
+		},
+	)
+	time.Sleep(time.Second)
+	state := common.QueryApplicationState(s.M, s.H, r.AppID)
+	common.AssertState(common.FormOneSubmitted, state.State)
 
 	return &los.SubmitFormOneResponse{
 		LoanApp: &los.LoanApplication{
-			AppID: a.AppID,
-			FName: a.Fname,
-			LName: a.Lname,
+			AppID: r.AppID,
+			FName: r.Fname,
+			LName: r.Lname,
 		},
 	}, nil
 }
 
 func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *los.SubmitFormTwoRequest) (*los.SubmitFormTwoResponse, error) {
 
-	request := common.LoanApplication{
+	r := common.LoanApplication{
 		AppID:   in.AppID,
 		Email:   in.Email,
 		PhoneNo: in.PhoneNo,
 	}
 
-	a, err := s.M.SaveFormTwo(&request)
+	id, err := s.M.GetWorkflowIdByAppID(r.AppID)
 	if err != nil {
 		return nil, err
 	}
 
-	common.CompleteActivity(s.M, s.W, in.AppID, "SUCCESS")
+	s.H.SignalWorkflow(
+		id,
+		common.SignalName,
+		&common.SignalPayload{
+			Action: common.SubmitFormTwo,
+			Content: common.Content{
+				"appID":   r.AppID,
+				"email":   r.Email,
+				"phoneNo": r.PhoneNo,
+			},
+		},
+	)
+	time.Sleep(time.Second)
+	state := common.QueryApplicationState(s.M, s.H, r.AppID)
+	common.AssertState(common.FormTwoSubmitted, state.State)
 
 	return &los.SubmitFormTwoResponse{
 		LoanApp: &los.LoanApplication{
-			AppID:   a.AppID,
-			FName:   a.Fname,
-			LName:   a.Lname,
-			Email:   a.Email,
-			PhoneNo: a.PhoneNo,
+			AppID:   r.AppID,
+			FName:   r.Fname,
+			LName:   r.Lname,
+			Email:   r.Email,
+			PhoneNo: r.PhoneNo,
 		},
+	}, nil
+}
+
+func (s *LosApiServer) SubmitDeOne(_ context.Context, in *los.SubmitDeOneRequest) (*los.SubmitDeOneResponse, error) {
+
+	id, err := s.M.GetWorkflowIdByAppID(in.AppID)
+	if err != nil {
+		return nil, err
+	}
+
+	s.H.SignalWorkflow(
+		id,
+		common.SignalName,
+		&common.SignalPayload{
+			Action:  common.SubmitDEOne,
+			Content: common.Content{"appID": in.AppID},
+		},
+	)
+
+	time.Sleep(time.Second)
+	state := common.QueryApplicationState(s.M, s.H, in.AppID)
+	common.AssertState(common.DEOneSubmitted, state.State)
+
+	return &los.SubmitDeOneResponse{
+		AppID: in.AppID,
 	}, nil
 }
 

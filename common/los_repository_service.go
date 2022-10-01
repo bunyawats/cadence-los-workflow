@@ -196,7 +196,7 @@ func (m *MongodbHelper) SaveFormTwo(loanApp *LoanApplication) (*LoanApplication,
 	return &updatedLoanApp, err
 }
 
-func (m *MongodbHelper) GetTokenByAppID(appID string) (string, error) {
+func (m *MongodbHelper) GetWorkflowIdByAppID(appID string) (string, error) {
 
 	filter := bson.M{
 		"appID": bson.M{
@@ -209,7 +209,7 @@ func (m *MongodbHelper) GetTokenByAppID(appID string) (string, error) {
 		return "NA", err
 	}
 
-	return "NA", nil
+	return loanApplication.WorkflowID, nil
 }
 
 func (m *MongodbHelper) GetLoanApplicationByAppID(appID string) (*LoanApplication, error) {

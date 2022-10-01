@@ -30,13 +30,6 @@ func (g GinHandlerHelper) RegisterRouter(r *gin.Engine) {
 	r.GET("/nlos/query/state/:appId", g.QueryStateHandler)
 }
 
-func assertState(expected, actual common.State) {
-	if expected != actual {
-		message := fmt.Sprintf("Workflow in wrong state. Expected %v Actual %v", expected, actual)
-		panic(message)
-	}
-}
-
 func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 
 	fmt.Println("Call SubmitFormOneHandler API")
@@ -55,7 +48,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 	)
 	time.Sleep(time.Second)
 	state := common.QueryApplicationState(g.M, g.H, appID)
-	assertState(common.Created, state.State)
+	common.AssertState(common.Created, state.State)
 
 	g.H.SignalWorkflow(
 		ex.ID,
@@ -71,7 +64,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 	)
 	time.Sleep(time.Second)
 	state = common.QueryApplicationState(g.M, g.H, appID)
-	assertState(common.FormOneSubmitted, state.State)
+	common.AssertState(common.FormOneSubmitted, state.State)
 
 	g.H.SignalWorkflow(
 		ex.ID,
@@ -87,7 +80,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 	)
 	time.Sleep(time.Second)
 	state = common.QueryApplicationState(g.M, g.H, appID)
-	assertState(common.FormTwoSubmitted, state.State)
+	common.AssertState(common.FormTwoSubmitted, state.State)
 
 	g.H.SignalWorkflow(
 		ex.ID,
@@ -99,7 +92,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 	)
 	time.Sleep(time.Second)
 	state = common.QueryApplicationState(g.M, g.H, appID)
-	assertState(common.DEOneSubmitted, state.State)
+	common.AssertState(common.DEOneSubmitted, state.State)
 
 	g.H.SignalWorkflow(
 		ex.ID,
@@ -139,7 +132,7 @@ func (g GinHandlerHelper) CreateNewLoanApplicationHandler(c *gin.Context) {
 	)
 	time.Sleep(time.Second)
 	state := common.QueryApplicationState(g.M, g.H, appID)
-	//assertState(common.Created, state.State)
+	//common.AssertState(common.Created, state.State)
 
 	c.JSON(http.StatusOK, gin.H{
 		"appID":   appID,
@@ -161,7 +154,7 @@ func (g GinHandlerHelper) SubmitFormOneHandler(c *gin.Context) {
 	}
 	request.AppID = c.Param("appId")
 
-	taskTokenStr, err := g.M.GetTokenByAppID(request.AppID)
+	id, err := g.M.GetWorkflowIdByAppID(request.AppID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -169,9 +162,8 @@ func (g GinHandlerHelper) SubmitFormOneHandler(c *gin.Context) {
 		return
 	}
 
-	taskToken := common.DeserializeTaskToken([]byte(taskTokenStr))
 	g.H.SignalWorkflow(
-		taskToken.WorkflowID,
+		id,
 		common.SignalName,
 		&common.SignalPayload{
 			Action: common.SubmitFormOne,
@@ -184,7 +176,7 @@ func (g GinHandlerHelper) SubmitFormOneHandler(c *gin.Context) {
 	)
 	time.Sleep(time.Second)
 	_ = common.QueryApplicationState(g.M, g.H, request.AppID)
-	//assertState(common.FormOneSubmitted, state.State)
+	//common.AssertState(common.FormOneSubmitted, state.State)
 
 	c.JSON(http.StatusOK, &request)
 }
@@ -202,7 +194,7 @@ func (g GinHandlerHelper) SubmitFormTwoHandler(c *gin.Context) {
 	}
 	request.AppID = c.Param("appId")
 
-	taskTokenStr, err := g.M.GetTokenByAppID(request.AppID)
+	id, err := g.M.GetWorkflowIdByAppID(request.AppID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -210,9 +202,8 @@ func (g GinHandlerHelper) SubmitFormTwoHandler(c *gin.Context) {
 		return
 	}
 
-	taskToken := common.DeserializeTaskToken([]byte(taskTokenStr))
 	g.H.SignalWorkflow(
-		taskToken.WorkflowID,
+		id,
 		common.SignalName,
 		&common.SignalPayload{
 			Action: common.SubmitFormTwo,
@@ -225,7 +216,7 @@ func (g GinHandlerHelper) SubmitFormTwoHandler(c *gin.Context) {
 	)
 	time.Sleep(time.Second)
 	_ = common.QueryApplicationState(g.M, g.H, request.AppID)
-	//assertState(common.FormTwoSubmitted, state.State)
+	//common.AssertState(common.FormTwoSubmitted, state.State)
 
 	c.JSON(http.StatusOK, &request)
 }
@@ -236,7 +227,7 @@ func (g GinHandlerHelper) SubmitDeOneHandler(c *gin.Context) {
 
 	appID := c.Param("appId")
 
-	taskTokenStr, err := g.M.GetTokenByAppID(appID)
+	id, err := g.M.GetWorkflowIdByAppID(appID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -244,10 +235,8 @@ func (g GinHandlerHelper) SubmitDeOneHandler(c *gin.Context) {
 		return
 	}
 
-	taskToken := common.DeserializeTaskToken([]byte(taskTokenStr))
-
 	g.H.SignalWorkflow(
-		taskToken.WorkflowID,
+		id,
 		common.SignalName,
 		&common.SignalPayload{
 			Action:  common.SubmitDEOne,
@@ -257,7 +246,7 @@ func (g GinHandlerHelper) SubmitDeOneHandler(c *gin.Context) {
 
 	time.Sleep(time.Second)
 	state := common.QueryApplicationState(g.M, g.H, appID)
-	//assertState(common.DEOneSubmitted, state.State)
+	//common.AssertState(common.DEOneSubmitted, state.State)
 
 	c.JSON(http.StatusOK, gin.H{
 		"appID":   appID,

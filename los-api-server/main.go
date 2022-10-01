@@ -69,8 +69,8 @@ func init() {
 
 func main() {
 
-	runGin()
-	//runGrpc()
+	//runGin()
+	runGrpc()
 }
 
 func runGin() error {
@@ -93,16 +93,16 @@ func runGrpc() error {
 		return fmt.Errorf("failed to listen on %s: %w", listenOn, err)
 	}
 
-	server := grpc.NewServer()
-	reflection.Register(server)
+	s := grpc.NewServer()
+	reflection.Register(s)
 	los.RegisterLOSServer(
-		server,
+		s,
 		l,
 	)
 
 	log.Println("Listening on", listenOn)
-	if err := server.Serve(listener); err != nil {
-		return fmt.Errorf("failed to serve gRPC server: %w", err)
+	if err := s.Serve(listener); err != nil {
+		return fmt.Errorf("failed to serve gRPC s: %w", err)
 	}
 
 	return nil

@@ -8,6 +8,7 @@ service LOS {
   rpc CreateNewApp(CreateNewAppRequest) returns (CreateNewAppResponse){}
   rpc SubmitFormOne(SubmitFormOneRequest) returns (SubmitFormOneResponse) {}
   rpc SubmitFormTwo(SubmitFormTwoRequest) returns (SubmitFormTwoResponse) {}
+  rpc SubmitDeOne(SubmitDeOneRequest) returns (SubmitDeOneResponse) {}
   rpc NotificationDE1(NotificationDE1Request) returns (NotificationDE1Response) {}
   rpc QueryState(QueryStateRequest) returns (QueryStateResponse) {}
 
@@ -53,6 +54,13 @@ message SubmitFormTwoRequest {
 }
 message SubmitFormTwoResponse {
   LoanApplication loanApp = 1;
+}
+
+message SubmitDeOneRequest {
+  string appID = 1;
+}
+message SubmitDeOneResponse {
+  string appID = 1;
 }
 
 message NotificationDE1Request{

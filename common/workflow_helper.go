@@ -24,7 +24,7 @@ func StartWorkflow(h *LosHelper) *workflow.Execution {
 }
 
 func CompleteActivity(m *MongodbHelper, workflowClient cadence_client.Client, appID string, lastState string) {
-	taskToken, err := m.GetTokenByAppID(appID)
+	taskToken, err := m.GetWorkflowIdByAppID(appID)
 	if err != nil {
 		fmt.Printf("Failed to find taskToken by error : %+v\n", err)
 	} else {

@@ -1,6 +1,9 @@
 package common
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // StringPtr returns pointer to a string
 func StringPtr(v string) *string {
@@ -25,4 +28,11 @@ func DeserializeTaskToken(taskToken []byte) *TaskToken {
 		return nil
 	}
 	return token
+}
+
+func AssertState(expected, actual State) {
+	if expected != actual {
+		message := fmt.Sprintf("Workflow in wrong state. Expected %v Actual %v", expected, actual)
+		panic(message)
+	}
 }
