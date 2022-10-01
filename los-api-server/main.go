@@ -51,10 +51,10 @@ func init() {
 	}
 
 	g = GinHandlerHelper{
-		M: m,
-		R: r,
-		H: &h,
-		W: workflowClient,
+		MongodbHelper:  m,
+		RabbitMqHelper: r,
+		LosHelper:      &h,
+		CadenceClient:  workflowClient,
 	}
 
 	l = v1.NewLosApiServer(

@@ -11,10 +11,10 @@ import (
 
 type (
 	GinHandlerHelper struct {
-		M *common.MongodbHelper
-		R *common.RabbitMqHelper
-		H *common.LosHelper
-		W cadence_client.Client
+		MongodbHelper  *common.MongodbHelper
+		RabbitMqHelper *common.RabbitMqHelper
+		LosHelper      *common.LosHelper
+		CadenceClient  cadence_client.Client
 	}
 )
 
@@ -36,9 +36,9 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 
 	appID := c.Param("appId")
 
-	ex := common.StartWorkflow(g.H)
+	ex := common.StartWorkflow(g.LosHelper)
 
-	g.H.SignalWorkflow(
+	g.LosHelper.SignalWorkflow(
 		ex.ID,
 		common.SignalName,
 		&common.SignalPayload{
@@ -47,10 +47,10 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	state := common.QueryApplicationState(g.M, g.H, appID)
+	state := common.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
 	common.AssertState(common.Created, state.State)
 
-	g.H.SignalWorkflow(
+	g.LosHelper.SignalWorkflow(
 		ex.ID,
 		common.SignalName,
 		&common.SignalPayload{
@@ -63,10 +63,10 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	state = common.QueryApplicationState(g.M, g.H, appID)
+	state = common.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
 	common.AssertState(common.FormOneSubmitted, state.State)
 
-	g.H.SignalWorkflow(
+	g.LosHelper.SignalWorkflow(
 		ex.ID,
 		common.SignalName,
 		&common.SignalPayload{
@@ -79,10 +79,10 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	state = common.QueryApplicationState(g.M, g.H, appID)
+	state = common.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
 	common.AssertState(common.FormTwoSubmitted, state.State)
 
-	g.H.SignalWorkflow(
+	g.LosHelper.SignalWorkflow(
 		ex.ID,
 		common.SignalName,
 		&common.SignalPayload{
@@ -91,10 +91,10 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	state = common.QueryApplicationState(g.M, g.H, appID)
+	state = common.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
 	common.AssertState(common.DEOneSubmitted, state.State)
 
-	g.H.SignalWorkflow(
+	g.LosHelper.SignalWorkflow(
 		ex.ID,
 		common.SignalName,
 		&common.SignalPayload{
@@ -106,7 +106,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	state = common.QueryApplicationState(g.M, g.H, appID)
+	state = common.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
 	fmt.Printf("current state: %v", state)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -121,8 +121,8 @@ func (g GinHandlerHelper) CreateNewLoanApplicationHandler(c *gin.Context) {
 
 	appID := c.Param("appId")
 
-	ex := common.StartWorkflow(g.H)
-	g.H.SignalWorkflow(
+	ex := common.StartWorkflow(g.LosHelper)
+	g.LosHelper.SignalWorkflow(
 		ex.ID,
 		common.SignalName,
 		&common.SignalPayload{
@@ -131,7 +131,7 @@ func (g GinHandlerHelper) CreateNewLoanApplicationHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	state := common.QueryApplicationState(g.M, g.H, appID)
+	state := common.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
 	//common.AssertState(common.Created, state.State)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -154,7 +154,7 @@ func (g GinHandlerHelper) SubmitFormOneHandler(c *gin.Context) {
 	}
 	request.AppID = c.Param("appId")
 
-	id, err := g.M.GetWorkflowIdByAppID(request.AppID)
+	id, err := g.MongodbHelper.GetWorkflowIdByAppID(request.AppID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -162,7 +162,7 @@ func (g GinHandlerHelper) SubmitFormOneHandler(c *gin.Context) {
 		return
 	}
 
-	g.H.SignalWorkflow(
+	g.LosHelper.SignalWorkflow(
 		id,
 		common.SignalName,
 		&common.SignalPayload{
@@ -175,7 +175,7 @@ func (g GinHandlerHelper) SubmitFormOneHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	_ = common.QueryApplicationState(g.M, g.H, request.AppID)
+	_ = common.QueryApplicationState(g.MongodbHelper, g.LosHelper, request.AppID)
 	//common.AssertState(common.FormOneSubmitted, state.State)
 
 	c.JSON(http.StatusOK, &request)
@@ -194,7 +194,7 @@ func (g GinHandlerHelper) SubmitFormTwoHandler(c *gin.Context) {
 	}
 	request.AppID = c.Param("appId")
 
-	id, err := g.M.GetWorkflowIdByAppID(request.AppID)
+	id, err := g.MongodbHelper.GetWorkflowIdByAppID(request.AppID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -202,7 +202,7 @@ func (g GinHandlerHelper) SubmitFormTwoHandler(c *gin.Context) {
 		return
 	}
 
-	g.H.SignalWorkflow(
+	g.LosHelper.SignalWorkflow(
 		id,
 		common.SignalName,
 		&common.SignalPayload{
@@ -215,7 +215,7 @@ func (g GinHandlerHelper) SubmitFormTwoHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	_ = common.QueryApplicationState(g.M, g.H, request.AppID)
+	_ = common.QueryApplicationState(g.MongodbHelper, g.LosHelper, request.AppID)
 	//common.AssertState(common.FormTwoSubmitted, state.State)
 
 	c.JSON(http.StatusOK, &request)
@@ -227,7 +227,7 @@ func (g GinHandlerHelper) SubmitDeOneHandler(c *gin.Context) {
 
 	appID := c.Param("appId")
 
-	id, err := g.M.GetWorkflowIdByAppID(appID)
+	id, err := g.MongodbHelper.GetWorkflowIdByAppID(appID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -235,7 +235,7 @@ func (g GinHandlerHelper) SubmitDeOneHandler(c *gin.Context) {
 		return
 	}
 
-	g.H.SignalWorkflow(
+	g.LosHelper.SignalWorkflow(
 		id,
 		common.SignalName,
 		&common.SignalPayload{
@@ -245,7 +245,7 @@ func (g GinHandlerHelper) SubmitDeOneHandler(c *gin.Context) {
 	)
 
 	time.Sleep(time.Second)
-	state := common.QueryApplicationState(g.M, g.H, appID)
+	state := common.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
 	//common.AssertState(common.DEOneSubmitted, state.State)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -267,10 +267,10 @@ func (g GinHandlerHelper) SendDEResultHandler(c *gin.Context) {
 		return
 	}
 
-	g.R.PublishDEResult(&request)
+	g.RabbitMqHelper.PublishDEResult(&request)
 
 	time.Sleep(time.Second)
-	state := common.QueryApplicationState(g.M, g.H, request.AppID)
+	state := common.QueryApplicationState(g.MongodbHelper, g.LosHelper, request.AppID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"appID":   request.AppID,
@@ -284,7 +284,7 @@ func (g GinHandlerHelper) QueryStateHandler(c *gin.Context) {
 	fmt.Println("Call QueryStateHandler API")
 
 	appID := c.Param("appId")
-	queryResult := common.QueryApplicationState(g.M, g.H, appID)
+	queryResult := common.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
 	if queryResult != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"app_id":  appID,

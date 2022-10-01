@@ -35,9 +35,9 @@ func init() {
 	h.SetupServiceConfig()
 
 	w = LosWorkFlowHelper{
-		M: m,
-		H: &h,
-		R: r,
+		MongodbHelper:  m,
+		LosHelper:      &h,
+		RabbitMqHelper: r,
 	}
 }
 

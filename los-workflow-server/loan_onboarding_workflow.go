@@ -17,42 +17,42 @@ import (
 
 type (
 	LosWorkFlowHelper struct {
-		M *los_common.MongodbHelper
-		H *los_common.LosHelper
-		R *los_common.RabbitMqHelper
+		MongodbHelper  *los_common.MongodbHelper
+		LosHelper      *los_common.LosHelper
+		RabbitMqHelper *los_common.RabbitMqHelper
 	}
 )
 
 func (w LosWorkFlowHelper) StartWorkers() {
 	// Configure worker options.
 	workerOptions := worker.Options{
-		MetricsScope: w.H.WorkerMetricScope,
-		Logger:       w.H.Logger,
+		MetricsScope: w.LosHelper.WorkerMetricScope,
+		Logger:       w.LosHelper.Logger,
 		FeatureFlags: client.FeatureFlags{
 			WorkflowExecutionAlreadyCompletedErrorEnabled: true,
 		},
 	}
-	w.H.StartWorkers(w.H.Config.DomainName, los_common.ApplicationName, workerOptions)
+	w.LosHelper.StartWorkers(w.LosHelper.Config.DomainName, los_common.ApplicationName, workerOptions)
 }
 
 func (w LosWorkFlowHelper) RegisterWorkflowAndActivity() {
 
-	w.H.RegisterWorkflowWithAlias(w.loanOnBoardingWorkflow, los_common.LoanOnBoardingWorkflowName)
+	w.LosHelper.RegisterWorkflowWithAlias(w.loanOnBoardingWorkflow, los_common.LoanOnBoardingWorkflowName)
 
-	w.H.RegisterActivity(w.createNewAppActivity)
-	w.H.RegisterActivity(w.submitFormOneActivity)
-	w.H.RegisterActivity(w.submitFormTwoActivity)
-	w.H.RegisterActivity(w.submitDE1Activity)
-	w.H.RegisterActivity(w.approveActivity)
-	w.H.RegisterActivity(w.rejectActivity)
-	w.H.RegisterActivity(w.cancelActivity)
+	w.LosHelper.RegisterActivity(w.createNewAppActivity)
+	w.LosHelper.RegisterActivity(w.submitFormOneActivity)
+	w.LosHelper.RegisterActivity(w.submitFormTwoActivity)
+	w.LosHelper.RegisterActivity(w.submitDE1Activity)
+	w.LosHelper.RegisterActivity(w.approveActivity)
+	w.LosHelper.RegisterActivity(w.rejectActivity)
+	w.LosHelper.RegisterActivity(w.cancelActivity)
 }
 
 func (w LosWorkFlowHelper) updateCurrentState(ctx workflow.Context, loanAppID string, state string) {
 	info := workflow.GetInfo(ctx)
 	workflowId := info.WorkflowExecution.ID
 	runID := info.WorkflowExecution.RunID
-	_ = w.M.UpdateLoanApplicationTaskToken(loanAppID, state, workflowId, runID)
+	_ = w.MongodbHelper.UpdateLoanApplicationTaskToken(loanAppID, state, workflowId, runID)
 }
 
 func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (los_common.State, error) {
@@ -240,7 +240,7 @@ func (w LosWorkFlowHelper) createNewAppActivity(ctx context.Context, loanAppID s
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++createNewAppActivity  started+++++\n " + loanAppID)
 
-	if err := w.M.CreateNewLoanApplication(loanAppID); err != nil {
+	if err := w.MongodbHelper.CreateNewLoanApplication(loanAppID); err != nil {
 		return "FAIL", err
 	}
 
@@ -251,7 +251,7 @@ func (w LosWorkFlowHelper) submitFormOneActivity(ctx context.Context, loanApp *l
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++submitFormOneActivity  started+++++\n " + loanApp.AppID)
 
-	_, err := w.M.SaveFormOne(loanApp)
+	_, err := w.MongodbHelper.SaveFormOne(loanApp)
 	if err != nil {
 		return "FAIL", err
 	}
@@ -263,7 +263,7 @@ func (w LosWorkFlowHelper) submitFormTwoActivity(ctx context.Context, loanApp *l
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++submitFormTwoActivity  started+++++\n" + loanApp.AppID)
 
-	_, err := w.M.SaveFormTwo(loanApp)
+	_, err := w.MongodbHelper.SaveFormTwo(loanApp)
 	if err != nil {
 		return "FAIL", err
 	}
@@ -275,12 +275,12 @@ func (w LosWorkFlowHelper) submitDE1Activity(ctx context.Context, loanAppID stri
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++submitDE1Activity  started+++++\n" + loanAppID)
 
-	loanApp, err := w.M.GetLoanApplicationByAppID(loanAppID)
+	loanApp, err := w.MongodbHelper.GetLoanApplicationByAppID(loanAppID)
 	if err != nil {
 		return "FAIL", err
 	}
 
-	w.R.PublishAppDEOne(loanApp)
+	w.RabbitMqHelper.PublishAppDEOne(loanApp)
 
 	return "SUCCESS", nil
 }
