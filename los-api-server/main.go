@@ -69,8 +69,8 @@ func init() {
 
 func main() {
 
-	//runGin()
-	runGrpc()
+	runGin()
+	//runGrpc()
 }
 
 func runGin() error {
