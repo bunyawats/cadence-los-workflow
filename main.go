@@ -9,10 +9,12 @@ import (
 	_ "github.com/rookie-ninja/rk-boot/v2"
 	rkboot "github.com/rookie-ninja/rk-boot/v2"
 	_ "github.com/rookie-ninja/rk-db/mongodb"
+	rkmongo "github.com/rookie-ninja/rk-db/mongodb"
 	_ "github.com/rookie-ninja/rk-entry/v2"
 	rkentry "github.com/rookie-ninja/rk-entry/v2/entry"
 	_ "github.com/rookie-ninja/rk-grpc/v2/boot"
 	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
+	"go.mongodb.org/mongo-driver/mongo"
 	_ "go.uber.org/cadence"
 	"google.golang.org/grpc"
 )
@@ -21,9 +23,6 @@ const (
 	rabbitMqUri      = "RABBITMQ_URI"
 	rabbitMqInQueue  = "RABBITMQ_IN_QUEUE"
 	rabbitMqOutQueue = "RABBITMQ_OUT_QUEUE"
-
-	mongoUri      = "MONGO_URI"
-	mongoDatabase = "MONGO_DATABASE"
 
 	configName = "ssc-config"
 )
@@ -48,10 +47,11 @@ func init() {
 		OutQueueName: getConfigString(rabbitMqOutQueue),
 	})
 
-	m := common.NewMongodbHelper(common.MongodbConfig{
-		MongoUri:      getConfigString(mongoUri),
-		MongoDatabase: getConfigString(mongoDatabase),
-	})
+	m := common.NewMongodbHelperWithCallBack(
+		func() *mongo.Database {
+			return rkmongo.GetMongoDB("ssc-mongo", "test")
+		},
+	)
 
 	var h common.LosHelper
 	h.SetupServiceConfig()
@@ -78,8 +78,9 @@ func main() {
 	// register grpc
 	entry := rkgrpc.GetGrpcEntry("ssc-grpc")
 	entry.AddRegFuncGrpc(registerLosServer)
-	entry.AddRegFuncGw(nil)
+	//entry.AddRegFuncGw(nil)
 
+	boot.Bootstrap(context.TODO())
 	boot.WaitForShutdownSig(context.TODO())
 }
 

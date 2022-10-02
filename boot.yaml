@@ -2,10 +2,24 @@
 config:
   - name: ssc-config
     path: "./config/.env"
+mongo:
+  - name: ssc-mongo
+    enabled: true
+    simpleURI: "mongodb://localhost:27017/test"
+    database:
+      - name: "test"
+logger:
+  - name: ssc-logger
+    zap:
+      outputPaths: ["logs/log.log"]
+      encoding: json
 grpc:
   - name: ssc-grpc
-    port: 8080
+    port: 8082
     enabled: true
+    enableReflection: true
+    enableRkGwOption: true
+    loggerEntry: ssc-logger
     commonService:
       enabled: true
     sw:
