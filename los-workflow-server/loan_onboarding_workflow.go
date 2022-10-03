@@ -36,6 +36,18 @@ func (w LosWorkFlowHelper) StartWorkers() {
 	w.LosHelper.StartWorkers(w.LosHelper.Config.DomainName, loscommon.ApplicationName, workerOptions)
 }
 
+func (w LosWorkFlowHelper) checkAllowAction(currentState loscommon.State, allowState ...loscommon.State) bool {
+
+	ok := false
+	for _, as := range allowState {
+		if currentState == as {
+			ok = true
+			break
+		}
+	}
+	return ok
+}
+
 func (w LosWorkFlowHelper) RegisterWorkflowAndActivity() {
 
 	w.LosHelper.RegisterWorkflowWithAlias(w.loanOnBoardingWorkflow, loscommon.LoanOnBoardingWorkflowName)
@@ -98,141 +110,157 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (loscomm
 		content = signal.Content
 		switch signal.Action {
 		case loscommon.Create:
+
+			if !w.checkAllowAction(state, loscommon.Initialized) {
+				continue
+			}
+
 			if signal.Content != nil {
 
 				var appID string
 				json.Unmarshal(content, &appID)
 
-				if state == loscommon.Initialized {
-					state = loscommon.Received
-					err := workflow.ExecuteActivity(ctx, w.createNewAppActivity, appID).Get(ctx, &activityResult)
-					if err != nil {
-						logger.Error("Failed to create loan application.")
-					} else {
-						logger.Info("State is now created.")
-						state = loscommon.Created
+				state = loscommon.Received
+				err := workflow.ExecuteActivity(ctx, w.createNewAppActivity, appID).Get(ctx, &activityResult)
+				if err != nil {
+					logger.Error("Failed to create loan application.")
+				} else {
+					logger.Info("State is now created.")
+					state = loscommon.Created
 
-						w.updateCurrentState(ctx, appID, string(state))
-					}
-
+					w.updateCurrentState(ctx, appID, string(state))
 				}
+
 			}
 
 		case loscommon.SubmitFormOne:
+
+			if !w.checkAllowAction(state, loscommon.Created) {
+				continue
+			}
+
 			if signal.Content != nil {
 
 				var la loscommon.LoanApplication
 				json.Unmarshal(content, &la)
 
-				if state == loscommon.Created {
-					err := workflow.ExecuteActivity(ctx, w.submitFormOneActivity, la).Get(ctx, &activityResult)
-					if err != nil {
-						logger.Error("Failed to submit loan application form one.")
-					} else {
-						logger.Info("State is now form one submitted.")
-						state = loscommon.FormOneSubmitted
+				err := workflow.ExecuteActivity(ctx, w.submitFormOneActivity, la).Get(ctx, &activityResult)
+				if err != nil {
+					logger.Error("Failed to submit loan application form one.")
+				} else {
+					logger.Info("State is now form one submitted.")
+					state = loscommon.FormOneSubmitted
 
-						w.updateCurrentState(ctx, la.AppID, string(state))
-					}
+					w.updateCurrentState(ctx, la.AppID, string(state))
 				}
 			}
 
 		case loscommon.SubmitFormTwo:
+
+			if !w.checkAllowAction(state, loscommon.FormOneSubmitted) {
+				continue
+			}
+
 			if signal.Content != nil {
 
 				var la loscommon.LoanApplication
 				json.Unmarshal(content, &la)
 
-				if state == loscommon.FormOneSubmitted {
-					err := workflow.ExecuteActivity(ctx, w.submitFormTwoActivity, la).Get(ctx, &activityResult)
-					if err != nil {
-						logger.Error("Failed to submit loan application form two.")
-					} else {
-						logger.Info("State is now form two submitted.")
-						state = loscommon.FormTwoSubmitted
+				err := workflow.ExecuteActivity(ctx, w.submitFormTwoActivity, la).Get(ctx, &activityResult)
+				if err != nil {
+					logger.Error("Failed to submit loan application form two.")
+				} else {
+					logger.Info("State is now form two submitted.")
+					state = loscommon.FormTwoSubmitted
 
-						w.updateCurrentState(ctx, la.AppID, string(state))
-					}
+					w.updateCurrentState(ctx, la.AppID, string(state))
 				}
 			}
 
 		case loscommon.SubmitDEOne:
+
+			if !w.checkAllowAction(state, loscommon.FormTwoSubmitted) {
+				continue
+			}
+
 			if signal.Content != nil {
 
 				var appID string
 				json.Unmarshal(content, &appID)
 
-				if state == loscommon.FormTwoSubmitted {
-					err := workflow.ExecuteActivity(ctx, w.submitDE1Activity, appID).Get(ctx, &activityResult)
-					if err != nil {
-						logger.Error("Failed to submit DE one.")
-					} else {
-						logger.Info("State is now deOneSubmitted.")
-						state = loscommon.DEOneSubmitted
+				err := workflow.ExecuteActivity(ctx, w.submitDE1Activity, appID).Get(ctx, &activityResult)
+				if err != nil {
+					logger.Error("Failed to submit DE one.")
+				} else {
+					logger.Info("State is now deOneSubmitted.")
+					state = loscommon.DEOneSubmitted
 
-						w.updateCurrentState(ctx, appID, string(state))
-					}
+					w.updateCurrentState(ctx, appID, string(state))
 				}
 			}
 
 		case loscommon.DEOneResultNotification:
+
+			if !w.checkAllowAction(state, loscommon.DEOneSubmitted) {
+				continue
+			}
+
 			if signal.Content != nil {
 
 				var r loscommon.DEResult
 				json.Unmarshal(content, &r)
 
-				if state == loscommon.DEOneSubmitted {
-					if r.Status == loscommon.Approve {
-						err := workflow.ExecuteActivity(ctx, w.approveActivity, r.AppID).Get(ctx, &activityResult)
-						if err != nil {
-							logger.Error("Failed to approve loan application.")
-						} else {
-							logger.Info("State is now approved.")
-							state = loscommon.Approved
-
-							w.updateCurrentState(ctx, r.AppID, string(state))
-						}
-						return state, nil
-					} else if r.Status == loscommon.Reject {
-						err := workflow.ExecuteActivity(ctx, w.rejectActivity, r.AppID).Get(ctx, &activityResult)
-						if err != nil {
-							logger.Error("Failed to reject loan application.")
-						} else {
-							logger.Info("State is now rejected.")
-							state = loscommon.Rejected
-
-							w.updateCurrentState(ctx, r.AppID, string(state))
-						}
-						return state, nil
+				if r.Status == loscommon.Approve {
+					err := workflow.ExecuteActivity(ctx, w.approveActivity, r.AppID).Get(ctx, &activityResult)
+					if err != nil {
+						logger.Error("Failed to approve loan application.")
 					} else {
-						logger.Error(fmt.Sprintf("Wrong DE result :%v.", r.Status))
+						logger.Info("State is now approved.")
+						state = loscommon.Approved
+
+						w.updateCurrentState(ctx, r.AppID, string(state))
 					}
+					return state, nil
+				} else if r.Status == loscommon.Reject {
+					err := workflow.ExecuteActivity(ctx, w.rejectActivity, r.AppID).Get(ctx, &activityResult)
+					if err != nil {
+						logger.Error("Failed to reject loan application.")
+					} else {
+						logger.Info("State is now rejected.")
+						state = loscommon.Rejected
+
+						w.updateCurrentState(ctx, r.AppID, string(state))
+					}
+					return state, nil
+				} else {
+					logger.Error(fmt.Sprintf("Wrong DE result :%v.", r.Status))
 				}
 			}
 
 		case loscommon.Cancel:
+
+			if !w.checkAllowAction(state, loscommon.Approved, loscommon.Rejected) {
+				continue
+			}
 
 			if signal.Content != nil {
 
 				var appID string
 				json.Unmarshal(content, &appID)
 
-				if state != loscommon.Approved && state != loscommon.Rejected {
+				err := workflow.ExecuteActivity(ctx, w.rejectActivity, appID).Get(ctx, &activityResult)
+				if err != nil {
+					logger.Error("Failed to reject loan application.")
+				} else {
+					logger.Info("State is now canceled.")
+					state = loscommon.Canceled
 
-					err := workflow.ExecuteActivity(ctx, w.rejectActivity, appID).Get(ctx, &activityResult)
-					if err != nil {
-						logger.Error("Failed to reject loan application.")
-					} else {
-						logger.Info("State is now canceled.")
-						state = loscommon.Canceled
+					w.updateCurrentState(ctx, appID, string(state))
 
-						w.updateCurrentState(ctx, appID, string(state))
-
-						return state, nil
-					}
+					return state, nil
 				}
-
 			}
+
 		}
 	}
 }
