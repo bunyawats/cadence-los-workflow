@@ -88,28 +88,27 @@ func (r *RabbitMqHelper) ConsumeRabbitMqMessage(m *MongodbHelper, h *LosHelper) 
 	go func() {
 		for d := range msgs {
 			log.Printf("Received a message: %s", d.Body)
-			var request DEResult
-			json.Unmarshal(d.Body, &request)
 
-			loanApp, err := m.GetLoanApplicationByAppID(request.AppID)
+			var r DEResult
+			json.Unmarshal(d.Body, &r)
+
+			cb, _ := json.Marshal(&r)
+
+			la, err := m.GetLoanApplicationByAppID(r.AppID)
 			if err != nil {
 				return
 			}
 
-			//taskToken := DeserializeTaskToken([]byte(taskTokenStr))
 			h.SignalWorkflow(
-				loanApp.WorkflowID,
+				la.WorkflowID,
 				SignalName,
 				&SignalPayload{
-					Action: DEOneResultNotification,
-					Content: Content{
-						"appID":  request.AppID,
-						"status": request.Status,
-					},
+					Action:  DEOneResultNotification,
+					Content: cb,
 				},
 			)
 			time.Sleep(time.Second * 5)
-			state := QueryApplicationState(m, h, request.AppID)
+			state := QueryApplicationState(m, h, r.AppID)
 			fmt.Printf("current state: %v", state)
 		}
 	}()

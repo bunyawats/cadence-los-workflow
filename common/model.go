@@ -58,7 +58,7 @@ type (
 
 	State   string
 	Action  string
-	Content map[string]interface{}
+	Content []byte
 
 	QueryResult struct {
 		State   State
