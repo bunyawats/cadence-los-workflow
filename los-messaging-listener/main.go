@@ -16,22 +16,29 @@ const (
 	mongoDatabase = "MONGO_DATABASE"
 )
 
-func main() {
+var (
+	h common.WorkflowHelper
+	r *service.RabbitMqService
+	m *service.MongodbService
+)
 
-	var h common.WorkflowHelper
+func init() {
 
-	r := service.NewRabbitMqService(service.RabbitMqConfig{
+	r = service.NewRabbitMqService(service.RabbitMqConfig{
 		RabbitMqUri:  os.Getenv(rabbitMqUri),
 		InQueueName:  os.Getenv(rabbitMqInQueue),
 		OutQueueName: os.Getenv(rabbitMqOutQueue),
 	})
 
-	m := service.NewMongodbService(service.MongodbConfig{
+	m = service.NewMongodbService(service.MongodbConfig{
 		MongoUri:      os.Getenv(mongoUri),
 		MongoDatabase: os.Getenv(mongoDatabase),
 	})
 
 	h.SetupServiceConfig()
+}
+
+func main() {
 
 	fmt.Println("start messaging listener")
 	r.ConsumeRabbitMqMessage(m, &h)
