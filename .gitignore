@@ -4,3 +4,4 @@
 /los-api-server/losapis/gen/
 /go.sum
 /config/.env
+/logs/log.log

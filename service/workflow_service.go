@@ -38,7 +38,7 @@ func (w WorkflowService) StartWorkers() {
 	w.WorkflowHelper.StartWorkers(w.WorkflowHelper.Config.DomainName, model.ApplicationName, workerOptions)
 }
 
-func (w WorkflowService) checkAllowAction(currentState model.State, allowState ...model.State) bool {
+func (w WorkflowService) checkAllowState(currentState model.State, allowState ...model.State) bool {
 
 	ok := false
 	for _, as := range allowState {
@@ -113,7 +113,7 @@ func (w WorkflowService) loanOnBoardingWorkflow(ctx workflow.Context) (model.Sta
 		switch signal.Action {
 		case model.Create:
 
-			if !w.checkAllowAction(state, model.Initialized) ||
+			if !w.checkAllowState(state, model.Initialized) ||
 				signal.Content == nil {
 				continue
 			}
@@ -126,15 +126,14 @@ func (w WorkflowService) loanOnBoardingWorkflow(ctx workflow.Context) (model.Sta
 			if err != nil {
 				logger.Error("Failed to create loan application.")
 			} else {
-				logger.Info("State is now created.")
-				state = model.Created
 
+				state = model.Created
 				w.updateCurrentState(ctx, appID, string(state))
 			}
 
 		case model.SubmitFormOne:
 
-			if !w.checkAllowAction(state, model.Created) ||
+			if !w.checkAllowState(state, model.Created) ||
 				signal.Content == nil {
 				continue
 			}
@@ -146,15 +145,14 @@ func (w WorkflowService) loanOnBoardingWorkflow(ctx workflow.Context) (model.Sta
 			if err != nil {
 				logger.Error("Failed to submit loan application form one.")
 			} else {
-				logger.Info("State is now form one submitted.")
-				state = model.FormOneSubmitted
 
+				state = model.FormOneSubmitted
 				w.updateCurrentState(ctx, la.AppID, string(state))
 			}
 
 		case model.SubmitFormTwo:
 
-			if !w.checkAllowAction(state, model.FormOneSubmitted) ||
+			if !w.checkAllowState(state, model.FormOneSubmitted) ||
 				signal.Content == nil {
 				continue
 			}
@@ -166,15 +164,14 @@ func (w WorkflowService) loanOnBoardingWorkflow(ctx workflow.Context) (model.Sta
 			if err != nil {
 				logger.Error("Failed to submit loan application form two.")
 			} else {
-				logger.Info("State is now form two submitted.")
-				state = model.FormTwoSubmitted
 
+				state = model.FormTwoSubmitted
 				w.updateCurrentState(ctx, la.AppID, string(state))
 			}
 
 		case model.SubmitDEOne:
 
-			if !w.checkAllowAction(state, model.FormTwoSubmitted) ||
+			if !w.checkAllowState(state, model.FormTwoSubmitted) ||
 				signal.Content == nil {
 				continue
 			}
@@ -186,15 +183,14 @@ func (w WorkflowService) loanOnBoardingWorkflow(ctx workflow.Context) (model.Sta
 			if err != nil {
 				logger.Error("Failed to submit DE one.")
 			} else {
-				logger.Info("State is now deOneSubmitted.")
-				state = model.DEOneSubmitted
 
+				state = model.DEOneSubmitted
 				w.updateCurrentState(ctx, appID, string(state))
 			}
 
 		case model.DEOneResultNotification:
 
-			if !w.checkAllowAction(state, model.DEOneSubmitted) ||
+			if !w.checkAllowState(state, model.DEOneSubmitted) ||
 				signal.Content == nil {
 				continue
 			}
@@ -207,7 +203,7 @@ func (w WorkflowService) loanOnBoardingWorkflow(ctx workflow.Context) (model.Sta
 				if err != nil {
 					logger.Error("Failed to approve loan application.")
 				} else {
-					logger.Info("State is now approved.")
+
 					state = model.Approved
 
 					w.updateCurrentState(ctx, r.AppID, string(state))
@@ -219,9 +215,8 @@ func (w WorkflowService) loanOnBoardingWorkflow(ctx workflow.Context) (model.Sta
 				if err != nil {
 					logger.Error("Failed to reject loan application.")
 				} else {
-					logger.Info("State is now rejected.")
-					state = model.Rejected
 
+					state = model.Rejected
 					w.updateCurrentState(ctx, r.AppID, string(state))
 				}
 				return state, nil
@@ -230,7 +225,7 @@ func (w WorkflowService) loanOnBoardingWorkflow(ctx workflow.Context) (model.Sta
 
 		case model.Cancel:
 
-			if !w.checkAllowAction(state, model.Approved, model.Rejected) ||
+			if !w.checkAllowState(state, model.Approved, model.Rejected) ||
 				signal.Content == nil {
 				continue
 			}
@@ -242,14 +237,15 @@ func (w WorkflowService) loanOnBoardingWorkflow(ctx workflow.Context) (model.Sta
 			if err != nil {
 				logger.Error("Failed to reject loan application.")
 			} else {
-				logger.Info("State is now canceled.")
-				state = model.Canceled
 
+				state = model.Canceled
 				w.updateCurrentState(ctx, appID, string(state))
 
 				return state, nil
 			}
 		}
+
+		logger.Info(fmt.Sprintf("State is now %v.", state))
 	}
 }
 
