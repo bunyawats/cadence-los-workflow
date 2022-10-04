@@ -319,15 +319,15 @@ func (w WorkflowService) cancelActivity(ctx context.Context, loanAppID string) (
 	return "SUCCESS", nil
 }
 
-func StartWorkflow(h *common.WorkflowHelper) *workflow.Execution {
+func (w WorkflowService) StartWorkflow() *workflow.Execution {
 	workflowOptions := client.StartWorkflowOptions{
 		ID:                              "los_" + uuid.New(),
 		TaskList:                        model.ApplicationName,
 		ExecutionStartToCloseTimeout:    20 * time.Minute,
 		DecisionTaskStartToCloseTimeout: 20 * time.Minute,
 	}
-	execution := h.StartWorkflow(workflowOptions, model.LoanOnBoardingWorkflowName)
-	h.Logger.Info("Started work flow!", zap.String("WorkflowId", execution.ID), zap.String("RunId", execution.RunID))
+	execution := w.WorkflowHelper.StartWorkflow(workflowOptions, model.LoanOnBoardingWorkflowName)
+	w.WorkflowHelper.Logger.Info("Started work flow!", zap.String("WorkflowId", execution.ID), zap.String("RunId", execution.RunID))
 	return execution
 }
 

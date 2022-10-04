@@ -36,7 +36,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 
 	appID := c.Param("appId")
 
-	ex := service.StartWorkflow(g.Service.WorkflowHelper)
+	ex := g.Service.StartWorkflow()
 
 	cb, _ := json.Marshal(appID)
 
@@ -133,7 +133,7 @@ func (g GinHandlerHelper) CreateNewLoanApplicationHandler(c *gin.Context) {
 
 	cb, _ := json.Marshal(appID)
 
-	ex := service.StartWorkflow(g.Service.WorkflowHelper)
+	ex := g.Service.StartWorkflow()
 	g.Service.WorkflowHelper.SignalWorkflow(
 		ex.ID,
 		model.SignalName,

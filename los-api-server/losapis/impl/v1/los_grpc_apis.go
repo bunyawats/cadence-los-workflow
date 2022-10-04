@@ -24,7 +24,7 @@ func (s *LosApiServer) CreateNewApp(_ context.Context, in *v1.CreateNewAppReques
 
 	cb, _ := json.Marshal(appID)
 
-	ex := service.StartWorkflow(s.Service.WorkflowHelper)
+	ex := s.Service.StartWorkflow()
 	s.Service.WorkflowHelper.SignalWorkflow(
 		ex.ID,
 		model.SignalName,
