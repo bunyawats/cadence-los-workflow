@@ -54,17 +54,19 @@ func (r *RabbitMqService) PublishAppDEOne(payload *model.LoanApplication) {
 
 	data, _ := json.Marshal(payload)
 	queueName := r.outQueueName
-	publishMessage(r, queueName, data)
+	r.publishMessage(queueName, data)
 }
 
 func (r *RabbitMqService) PublishDEResult(payload *model.DEResult) {
 
+	fmt.Println("Call PublishDEResult API", payload)
+
 	data, _ := json.Marshal(payload)
 	queueName := r.inQueueName
-	publishMessage(r, queueName, data)
+	r.publishMessage(queueName, data)
 }
 
-func publishMessage(r *RabbitMqService, queueName string, data []byte) {
+func (r *RabbitMqService) publishMessage(queueName string, data []byte) {
 	publishChannelAmqp, _ := r.amqpConnection.Channel()
 	err := publishChannelAmqp.Publish(
 		"",
