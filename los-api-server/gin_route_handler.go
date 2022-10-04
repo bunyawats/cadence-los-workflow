@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	cadence_client "go.uber.org/cadence/client"
+	"go.uber.org/cadence/client"
 	"net/http"
 	"time"
 )
@@ -17,7 +17,7 @@ type (
 		MongodbService  *service.MongodbService
 		RabbitMqService *service.RabbitMqService
 		WorkflowHelper  *common.WorkflowHelper
-		CadenceClient   cadence_client.Client
+		CadenceClient   client.Client
 	}
 )
 

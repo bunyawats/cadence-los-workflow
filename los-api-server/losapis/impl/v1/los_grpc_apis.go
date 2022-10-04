@@ -2,26 +2,27 @@ package v1
 
 import (
 	"cadence-los-workflow/common"
-	los "cadence-los-workflow/los-api-server/losapis/gen/v1"
+	v1 "cadence-los-workflow/los-api-server/losapis/gen/v1"
 	"cadence-los-workflow/model"
 	"cadence-los-workflow/service"
 	"context"
 	"encoding/json"
-	cadenceClient "go.uber.org/cadence/client"
+
+	"go.uber.org/cadence/client"
 	"time"
 )
 
 type LosApiServer struct {
-	los.UnimplementedLOSServer
+	v1.UnimplementedLOSServer
 	Context context.Context
 
 	MongodbService  *service.MongodbService
 	RabbitMqService *service.RabbitMqService
 	WorkflowHelper  *common.WorkflowHelper
-	CadenceClient   cadenceClient.Client
+	CadenceClient   client.Client
 }
 
-func (s *LosApiServer) CreateNewApp(_ context.Context, in *los.CreateNewAppRequest) (*los.CreateNewAppResponse, error) {
+func (s *LosApiServer) CreateNewApp(_ context.Context, in *v1.CreateNewAppRequest) (*v1.CreateNewAppResponse, error) {
 
 	appID := in.AppID
 
@@ -40,12 +41,12 @@ func (s *LosApiServer) CreateNewApp(_ context.Context, in *los.CreateNewAppReque
 	st := service.QueryApplicationState(s.MongodbService, s.WorkflowHelper, appID)
 	service.AssertState(model.Created, st.State)
 
-	return &los.CreateNewAppResponse{
+	return &v1.CreateNewAppResponse{
 		AppID: appID,
 	}, nil
 }
 
-func (s *LosApiServer) SubmitFormOne(_ context.Context, in *los.SubmitFormOneRequest) (*los.SubmitFormOneResponse, error) {
+func (s *LosApiServer) SubmitFormOne(_ context.Context, in *v1.SubmitFormOneRequest) (*v1.SubmitFormOneResponse, error) {
 
 	r := model.LoanApplication{
 		AppID: in.AppID,
@@ -72,8 +73,8 @@ func (s *LosApiServer) SubmitFormOne(_ context.Context, in *los.SubmitFormOneReq
 	st := service.QueryApplicationState(s.MongodbService, s.WorkflowHelper, r.AppID)
 	service.AssertState(model.FormOneSubmitted, st.State)
 
-	return &los.SubmitFormOneResponse{
-		LoanApp: &los.LoanApplication{
+	return &v1.SubmitFormOneResponse{
+		LoanApp: &v1.LoanApplication{
 			AppID: r.AppID,
 			FName: r.Fname,
 			LName: r.Lname,
@@ -81,7 +82,7 @@ func (s *LosApiServer) SubmitFormOne(_ context.Context, in *los.SubmitFormOneReq
 	}, nil
 }
 
-func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *los.SubmitFormTwoRequest) (*los.SubmitFormTwoResponse, error) {
+func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *v1.SubmitFormTwoRequest) (*v1.SubmitFormTwoResponse, error) {
 
 	r := model.LoanApplication{
 		AppID:   in.AppID,
@@ -108,8 +109,8 @@ func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *los.SubmitFormTwoReq
 	st := service.QueryApplicationState(s.MongodbService, s.WorkflowHelper, r.AppID)
 	service.AssertState(model.FormTwoSubmitted, st.State)
 
-	return &los.SubmitFormTwoResponse{
-		LoanApp: &los.LoanApplication{
+	return &v1.SubmitFormTwoResponse{
+		LoanApp: &v1.LoanApplication{
 			AppID:   r.AppID,
 			FName:   r.Fname,
 			LName:   r.Lname,
@@ -119,7 +120,7 @@ func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *los.SubmitFormTwoReq
 	}, nil
 }
 
-func (s *LosApiServer) SubmitDeOne(_ context.Context, in *los.SubmitDeOneRequest) (*los.SubmitDeOneResponse, error) {
+func (s *LosApiServer) SubmitDeOne(_ context.Context, in *v1.SubmitDeOneRequest) (*v1.SubmitDeOneResponse, error) {
 
 	id, err := s.MongodbService.GetWorkflowIdByAppID(in.AppID)
 	if err != nil {
@@ -141,30 +142,30 @@ func (s *LosApiServer) SubmitDeOne(_ context.Context, in *los.SubmitDeOneRequest
 	st := service.QueryApplicationState(s.MongodbService, s.WorkflowHelper, in.AppID)
 	service.AssertState(model.DEOneSubmitted, st.State)
 
-	return &los.SubmitDeOneResponse{
+	return &v1.SubmitDeOneResponse{
 		AppID: in.AppID,
 	}, nil
 }
 
-func (s *LosApiServer) NotificationDE1(_ context.Context, in *los.NotificationDE1Request) (*los.NotificationDE1Response, error) {
+func (s *LosApiServer) NotificationDE1(_ context.Context, in *v1.NotificationDE1Request) (*v1.NotificationDE1Response, error) {
 
 	s.RabbitMqService.PublishDEResult(&model.DEResult{
 		AppID:  in.AppID,
 		Status: in.Status,
 	})
 
-	return &los.NotificationDE1Response{
+	return &v1.NotificationDE1Response{
 		AppID:  in.AppID,
 		Status: in.Status,
 	}, nil
 }
 
-func (s *LosApiServer) QueryState(_ context.Context, in *los.QueryStateRequest) (*los.QueryStateResponse, error) {
+func (s *LosApiServer) QueryState(_ context.Context, in *v1.QueryStateRequest) (*v1.QueryStateResponse, error) {
 
 	st := service.QueryApplicationState(s.MongodbService, s.WorkflowHelper, in.AppID)
 
-	return &los.QueryStateResponse{
-		LoanAppState: &los.LoanAppState{
+	return &v1.QueryStateResponse{
+		LoanAppState: &v1.LoanAppState{
 			AppID: in.AppID,
 			State: string(st.State),
 		},

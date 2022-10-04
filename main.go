@@ -7,16 +7,11 @@ import (
 	"cadence-los-workflow/service"
 	"context"
 	"fmt"
-	_ "github.com/rookie-ninja/rk-boot/v2"
 	rkboot "github.com/rookie-ninja/rk-boot/v2"
-	_ "github.com/rookie-ninja/rk-db/mongodb"
 	rkmongo "github.com/rookie-ninja/rk-db/mongodb"
-	_ "github.com/rookie-ninja/rk-entry/v2"
 	rkentry "github.com/rookie-ninja/rk-entry/v2/entry"
-	_ "github.com/rookie-ninja/rk-grpc/v2/boot"
 	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
 	"go.mongodb.org/mongo-driver/mongo"
-	_ "go.uber.org/cadence"
 	"google.golang.org/grpc"
 )
 
@@ -30,8 +25,7 @@ const (
 
 var (
 	losApiServer *v1.LosApiServer
-
-	boot *rkboot.Boot
+	boot         *rkboot.Boot
 )
 
 func getConfigString(name string) string {

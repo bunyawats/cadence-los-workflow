@@ -1,7 +1,7 @@
 package service
 
 import (
-	loscommon "cadence-los-workflow/common"
+	"cadence-los-workflow/common"
 	"cadence-los-workflow/model"
 	"context"
 	"encoding/json"
@@ -21,7 +21,7 @@ import (
 type (
 	WorkflowService struct {
 		MongodbService  *MongodbService
-		WorkflowHelper  *loscommon.WorkflowHelper
+		WorkflowHelper  *common.WorkflowHelper
 		RabbitMqService *RabbitMqService
 	}
 )
@@ -319,7 +319,7 @@ func (w WorkflowService) cancelActivity(ctx context.Context, loanAppID string) (
 	return "SUCCESS", nil
 }
 
-func StartWorkflow(h *loscommon.WorkflowHelper) *workflow.Execution {
+func StartWorkflow(h *common.WorkflowHelper) *workflow.Execution {
 	workflowOptions := client.StartWorkflowOptions{
 		ID:                              "los_" + uuid.New(),
 		TaskList:                        model.ApplicationName,
@@ -331,7 +331,7 @@ func StartWorkflow(h *loscommon.WorkflowHelper) *workflow.Execution {
 	return execution
 }
 
-func QueryApplicationState(m *MongodbService, h *loscommon.WorkflowHelper, appID string) *model.QueryResult {
+func QueryApplicationState(m *MongodbService, h *common.WorkflowHelper, appID string) *model.QueryResult {
 
 	loanApp, err := m.GetLoanApplicationByAppID(appID)
 
