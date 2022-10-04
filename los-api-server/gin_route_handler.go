@@ -14,10 +14,10 @@ import (
 
 type (
 	GinHandlerHelper struct {
-		MongodbHelper  *service.MongodbService
-		RabbitMqHelper *service.RabbitMqService
-		LosHelper      *common.WorkflowHelper
-		CadenceClient  cadence_client.Client
+		MongodbService  *service.MongodbService
+		RabbitMqService *service.RabbitMqService
+		WorkflowHelper  *common.WorkflowHelper
+		CadenceClient   cadence_client.Client
 	}
 )
 
@@ -39,11 +39,11 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 
 	appID := c.Param("appId")
 
-	ex := service.StartWorkflow(g.LosHelper)
+	ex := service.StartWorkflow(g.WorkflowHelper)
 
 	cb, _ := json.Marshal(appID)
 
-	g.LosHelper.SignalWorkflow(
+	g.WorkflowHelper.SignalWorkflow(
 		ex.ID,
 		model.SignalName,
 		&model.SignalPayload{
@@ -52,7 +52,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	s := service.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
+	s := service.QueryApplicationState(g.MongodbService, g.WorkflowHelper, appID)
 	service.AssertState(model.Created, s.State)
 
 	cb, _ = json.Marshal(&model.LoanApplication{
@@ -61,7 +61,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 		Lname: "singchai",
 	})
 
-	g.LosHelper.SignalWorkflow(
+	g.WorkflowHelper.SignalWorkflow(
 		ex.ID,
 		model.SignalName,
 		&model.SignalPayload{
@@ -70,7 +70,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	s = service.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
+	s = service.QueryApplicationState(g.MongodbService, g.WorkflowHelper, appID)
 	service.AssertState(model.FormOneSubmitted, s.State)
 
 	cb, _ = json.Marshal(&model.LoanApplication{
@@ -79,7 +79,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 		PhoneNo: "0868372995",
 	})
 
-	g.LosHelper.SignalWorkflow(
+	g.WorkflowHelper.SignalWorkflow(
 		ex.ID,
 		model.SignalName,
 		&model.SignalPayload{
@@ -88,12 +88,12 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	s = service.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
+	s = service.QueryApplicationState(g.MongodbService, g.WorkflowHelper, appID)
 	service.AssertState(model.FormTwoSubmitted, s.State)
 
 	cb, _ = json.Marshal(appID)
 
-	g.LosHelper.SignalWorkflow(
+	g.WorkflowHelper.SignalWorkflow(
 		ex.ID,
 		model.SignalName,
 		&model.SignalPayload{
@@ -102,7 +102,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	s = service.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
+	s = service.QueryApplicationState(g.MongodbService, g.WorkflowHelper, appID)
 	service.AssertState(model.DEOneSubmitted, s.State)
 
 	cb, _ = json.Marshal(&model.DEResult{
@@ -110,7 +110,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 		Status: model.Approve,
 	})
 
-	g.LosHelper.SignalWorkflow(
+	g.WorkflowHelper.SignalWorkflow(
 		ex.ID,
 		model.SignalName,
 		&model.SignalPayload{
@@ -119,7 +119,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	s = service.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
+	s = service.QueryApplicationState(g.MongodbService, g.WorkflowHelper, appID)
 	fmt.Printf("current state: %v\n", s.State)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -136,8 +136,8 @@ func (g GinHandlerHelper) CreateNewLoanApplicationHandler(c *gin.Context) {
 
 	cb, _ := json.Marshal(appID)
 
-	ex := service.StartWorkflow(g.LosHelper)
-	g.LosHelper.SignalWorkflow(
+	ex := service.StartWorkflow(g.WorkflowHelper)
+	g.WorkflowHelper.SignalWorkflow(
 		ex.ID,
 		model.SignalName,
 		&model.SignalPayload{
@@ -146,7 +146,7 @@ func (g GinHandlerHelper) CreateNewLoanApplicationHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	s := service.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
+	s := service.QueryApplicationState(g.MongodbService, g.WorkflowHelper, appID)
 	//common.AssertState(common.Created, s.State)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -169,7 +169,7 @@ func (g GinHandlerHelper) SubmitFormOneHandler(c *gin.Context) {
 	}
 	r.AppID = c.Param("appId")
 
-	id, err := g.MongodbHelper.GetWorkflowIdByAppID(r.AppID)
+	id, err := g.MongodbService.GetWorkflowIdByAppID(r.AppID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -179,7 +179,7 @@ func (g GinHandlerHelper) SubmitFormOneHandler(c *gin.Context) {
 
 	cb, _ := json.Marshal(&r)
 
-	g.LosHelper.SignalWorkflow(
+	g.WorkflowHelper.SignalWorkflow(
 		id,
 		model.SignalName,
 		&model.SignalPayload{
@@ -188,7 +188,7 @@ func (g GinHandlerHelper) SubmitFormOneHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	_ = service.QueryApplicationState(g.MongodbHelper, g.LosHelper, r.AppID)
+	_ = service.QueryApplicationState(g.MongodbService, g.WorkflowHelper, r.AppID)
 	//common.AssertState(common.FormOneSubmitted, state.State)
 
 	c.JSON(http.StatusOK, &r)
@@ -207,7 +207,7 @@ func (g GinHandlerHelper) SubmitFormTwoHandler(c *gin.Context) {
 	}
 	r.AppID = c.Param("appId")
 
-	id, err := g.MongodbHelper.GetWorkflowIdByAppID(r.AppID)
+	id, err := g.MongodbService.GetWorkflowIdByAppID(r.AppID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -217,7 +217,7 @@ func (g GinHandlerHelper) SubmitFormTwoHandler(c *gin.Context) {
 
 	cb, _ := json.Marshal(&r)
 
-	g.LosHelper.SignalWorkflow(
+	g.WorkflowHelper.SignalWorkflow(
 		id,
 		model.SignalName,
 		&model.SignalPayload{
@@ -226,7 +226,7 @@ func (g GinHandlerHelper) SubmitFormTwoHandler(c *gin.Context) {
 		},
 	)
 	time.Sleep(time.Second)
-	_ = service.QueryApplicationState(g.MongodbHelper, g.LosHelper, r.AppID)
+	_ = service.QueryApplicationState(g.MongodbService, g.WorkflowHelper, r.AppID)
 	//common.AssertState(common.FormTwoSubmitted, state.State)
 
 	c.JSON(http.StatusOK, &r)
@@ -238,7 +238,7 @@ func (g GinHandlerHelper) SubmitDeOneHandler(c *gin.Context) {
 
 	appID := c.Param("appId")
 
-	id, err := g.MongodbHelper.GetWorkflowIdByAppID(appID)
+	id, err := g.MongodbService.GetWorkflowIdByAppID(appID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -248,7 +248,7 @@ func (g GinHandlerHelper) SubmitDeOneHandler(c *gin.Context) {
 
 	cb, _ := json.Marshal(appID)
 
-	g.LosHelper.SignalWorkflow(
+	g.WorkflowHelper.SignalWorkflow(
 		id,
 		model.SignalName,
 		&model.SignalPayload{
@@ -258,7 +258,7 @@ func (g GinHandlerHelper) SubmitDeOneHandler(c *gin.Context) {
 	)
 
 	time.Sleep(time.Second)
-	s := service.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
+	s := service.QueryApplicationState(g.MongodbService, g.WorkflowHelper, appID)
 	//common.AssertState(common.DEOneSubmitted, s.State)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -280,10 +280,10 @@ func (g GinHandlerHelper) SendDEResultHandler(c *gin.Context) {
 		return
 	}
 
-	g.RabbitMqHelper.PublishDEResult(&request)
+	g.RabbitMqService.PublishDEResult(&request)
 
 	time.Sleep(time.Second)
-	s := service.QueryApplicationState(g.MongodbHelper, g.LosHelper, request.AppID)
+	s := service.QueryApplicationState(g.MongodbService, g.WorkflowHelper, request.AppID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"appID":   request.AppID,
@@ -297,7 +297,7 @@ func (g GinHandlerHelper) QueryStateHandler(c *gin.Context) {
 	fmt.Println("Call QueryStateHandler API")
 
 	appID := c.Param("appId")
-	s := service.QueryApplicationState(g.MongodbHelper, g.LosHelper, appID)
+	s := service.QueryApplicationState(g.MongodbService, g.WorkflowHelper, appID)
 	if s != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"app_id":  appID,

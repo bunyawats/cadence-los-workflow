@@ -52,19 +52,19 @@ func init() {
 	}
 
 	g = GinHandlerHelper{
-		MongodbHelper:  m,
-		RabbitMqHelper: r,
-		LosHelper:      &h,
-		CadenceClient:  workflowClient,
+		MongodbService:  m,
+		RabbitMqService: r,
+		WorkflowHelper:  &h,
+		CadenceClient:   workflowClient,
 	}
 
-	l = v1.NewLosApiServer(
-		context.Background(),
-		m,
-		r,
-		&h,
-		workflowClient,
-	)
+	l = &v1.LosApiServer{
+		Context:         context.Background(),
+		MongodbService:  m,
+		RabbitMqService: r,
+		WorkflowHelper:  &h,
+		CadenceClient:   workflowClient,
+	}
 
 }
 
@@ -96,10 +96,7 @@ func runGrpc() error {
 
 	s := grpc.NewServer()
 	reflection.Register(s)
-	los.RegisterLOSServer(
-		s,
-		l,
-	)
+	los.RegisterLOSServer(s, l)
 
 	log.Println("Listening on", listenOn)
 	if err := s.Serve(listener); err != nil {

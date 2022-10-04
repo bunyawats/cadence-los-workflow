@@ -7,7 +7,7 @@ import (
 	"cadence-los-workflow/service"
 	"context"
 	"encoding/json"
-	cadence_client "go.uber.org/cadence/client"
+	cadenceClient "go.uber.org/cadence/client"
 	"time"
 )
 
@@ -15,27 +15,10 @@ type LosApiServer struct {
 	los.UnimplementedLOSServer
 	Context context.Context
 
-	M *service.MongodbService
-	R *service.RabbitMqService
-	H *common.WorkflowHelper
-	W cadence_client.Client
-}
-
-func NewLosApiServer(
-	cx context.Context,
-	m *service.MongodbService,
-	r *service.RabbitMqService,
-	h *common.WorkflowHelper,
-	w cadence_client.Client,
-) *LosApiServer {
-
-	return &LosApiServer{
-		Context: cx,
-		M:       m,
-		R:       r,
-		H:       h,
-		W:       w,
-	}
+	MongodbService  *service.MongodbService
+	RabbitMqService *service.RabbitMqService
+	WorkflowHelper  *common.WorkflowHelper
+	CadenceClient   cadenceClient.Client
 }
 
 func (s *LosApiServer) CreateNewApp(_ context.Context, in *los.CreateNewAppRequest) (*los.CreateNewAppResponse, error) {
@@ -44,8 +27,8 @@ func (s *LosApiServer) CreateNewApp(_ context.Context, in *los.CreateNewAppReque
 
 	cb, _ := json.Marshal(appID)
 
-	ex := service.StartWorkflow(s.H)
-	s.H.SignalWorkflow(
+	ex := service.StartWorkflow(s.WorkflowHelper)
+	s.WorkflowHelper.SignalWorkflow(
 		ex.ID,
 		model.SignalName,
 		&model.SignalPayload{
@@ -54,7 +37,7 @@ func (s *LosApiServer) CreateNewApp(_ context.Context, in *los.CreateNewAppReque
 		},
 	)
 	time.Sleep(time.Second)
-	st := service.QueryApplicationState(s.M, s.H, appID)
+	st := service.QueryApplicationState(s.MongodbService, s.WorkflowHelper, appID)
 	service.AssertState(model.Created, st.State)
 
 	return &los.CreateNewAppResponse{
@@ -70,14 +53,14 @@ func (s *LosApiServer) SubmitFormOne(_ context.Context, in *los.SubmitFormOneReq
 		Lname: in.LName,
 	}
 
-	id, err := s.M.GetWorkflowIdByAppID(r.AppID)
+	id, err := s.MongodbService.GetWorkflowIdByAppID(r.AppID)
 	if err != nil {
 		return nil, err
 	}
 
 	cb, _ := json.Marshal(&r)
 
-	s.H.SignalWorkflow(
+	s.WorkflowHelper.SignalWorkflow(
 		id,
 		model.SignalName,
 		&model.SignalPayload{
@@ -86,7 +69,7 @@ func (s *LosApiServer) SubmitFormOne(_ context.Context, in *los.SubmitFormOneReq
 		},
 	)
 	time.Sleep(time.Second)
-	st := service.QueryApplicationState(s.M, s.H, r.AppID)
+	st := service.QueryApplicationState(s.MongodbService, s.WorkflowHelper, r.AppID)
 	service.AssertState(model.FormOneSubmitted, st.State)
 
 	return &los.SubmitFormOneResponse{
@@ -106,14 +89,14 @@ func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *los.SubmitFormTwoReq
 		PhoneNo: in.PhoneNo,
 	}
 
-	id, err := s.M.GetWorkflowIdByAppID(r.AppID)
+	id, err := s.MongodbService.GetWorkflowIdByAppID(r.AppID)
 	if err != nil {
 		return nil, err
 	}
 
 	cb, _ := json.Marshal(&r)
 
-	s.H.SignalWorkflow(
+	s.WorkflowHelper.SignalWorkflow(
 		id,
 		model.SignalName,
 		&model.SignalPayload{
@@ -122,7 +105,7 @@ func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *los.SubmitFormTwoReq
 		},
 	)
 	time.Sleep(time.Second)
-	st := service.QueryApplicationState(s.M, s.H, r.AppID)
+	st := service.QueryApplicationState(s.MongodbService, s.WorkflowHelper, r.AppID)
 	service.AssertState(model.FormTwoSubmitted, st.State)
 
 	return &los.SubmitFormTwoResponse{
@@ -138,14 +121,14 @@ func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *los.SubmitFormTwoReq
 
 func (s *LosApiServer) SubmitDeOne(_ context.Context, in *los.SubmitDeOneRequest) (*los.SubmitDeOneResponse, error) {
 
-	id, err := s.M.GetWorkflowIdByAppID(in.AppID)
+	id, err := s.MongodbService.GetWorkflowIdByAppID(in.AppID)
 	if err != nil {
 		return nil, err
 	}
 
 	cb, _ := json.Marshal(in.AppID)
 
-	s.H.SignalWorkflow(
+	s.WorkflowHelper.SignalWorkflow(
 		id,
 		model.SignalName,
 		&model.SignalPayload{
@@ -155,7 +138,7 @@ func (s *LosApiServer) SubmitDeOne(_ context.Context, in *los.SubmitDeOneRequest
 	)
 
 	time.Sleep(time.Second)
-	st := service.QueryApplicationState(s.M, s.H, in.AppID)
+	st := service.QueryApplicationState(s.MongodbService, s.WorkflowHelper, in.AppID)
 	service.AssertState(model.DEOneSubmitted, st.State)
 
 	return &los.SubmitDeOneResponse{
@@ -165,7 +148,7 @@ func (s *LosApiServer) SubmitDeOne(_ context.Context, in *los.SubmitDeOneRequest
 
 func (s *LosApiServer) NotificationDE1(_ context.Context, in *los.NotificationDE1Request) (*los.NotificationDE1Response, error) {
 
-	s.R.PublishDEResult(&model.DEResult{
+	s.RabbitMqService.PublishDEResult(&model.DEResult{
 		AppID:  in.AppID,
 		Status: in.Status,
 	})
@@ -178,7 +161,7 @@ func (s *LosApiServer) NotificationDE1(_ context.Context, in *los.NotificationDE
 
 func (s *LosApiServer) QueryState(_ context.Context, in *los.QueryStateRequest) (*los.QueryStateResponse, error) {
 
-	st := service.QueryApplicationState(s.M, s.H, in.AppID)
+	st := service.QueryApplicationState(s.MongodbService, s.WorkflowHelper, in.AppID)
 
 	return &los.QueryStateResponse{
 		LoanAppState: &los.LoanAppState{
