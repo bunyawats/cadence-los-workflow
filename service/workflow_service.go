@@ -1,10 +1,12 @@
-package main
+package service
 
 import (
 	loscommon "cadence-los-workflow/common"
+	"cadence-los-workflow/model"
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/pborman/uuid"
 	"go.uber.org/cadence"
 	"go.uber.org/cadence/activity"
 	"go.uber.org/cadence/client"
@@ -17,26 +19,26 @@ import (
 )
 
 type (
-	LosWorkFlowHelper struct {
-		MongodbHelper  *loscommon.MongodbHelper
-		LosHelper      *loscommon.LosHelper
-		RabbitMqHelper *loscommon.RabbitMqHelper
+	WorkflowService struct {
+		MongodbService  *MongodbService
+		WorkflowHelper  *loscommon.WorkflowHelper
+		RabbitMqService *RabbitMqService
 	}
 )
 
-func (w LosWorkFlowHelper) StartWorkers() {
+func (w WorkflowService) StartWorkers() {
 	// Configure worker options.
 	workerOptions := worker.Options{
-		MetricsScope: w.LosHelper.WorkerMetricScope,
-		Logger:       w.LosHelper.Logger,
+		MetricsScope: w.WorkflowHelper.WorkerMetricScope,
+		Logger:       w.WorkflowHelper.Logger,
 		FeatureFlags: client.FeatureFlags{
 			WorkflowExecutionAlreadyCompletedErrorEnabled: true,
 		},
 	}
-	w.LosHelper.StartWorkers(w.LosHelper.Config.DomainName, loscommon.ApplicationName, workerOptions)
+	w.WorkflowHelper.StartWorkers(w.WorkflowHelper.Config.DomainName, model.ApplicationName, workerOptions)
 }
 
-func (w LosWorkFlowHelper) checkAllowAction(currentState loscommon.State, allowState ...loscommon.State) bool {
+func (w WorkflowService) checkAllowAction(currentState model.State, allowState ...model.State) bool {
 
 	ok := false
 	for _, as := range allowState {
@@ -48,29 +50,29 @@ func (w LosWorkFlowHelper) checkAllowAction(currentState loscommon.State, allowS
 	return ok
 }
 
-func (w LosWorkFlowHelper) RegisterWorkflowAndActivity() {
+func (w WorkflowService) RegisterWorkflowAndActivity() {
 
-	w.LosHelper.RegisterWorkflowWithAlias(w.loanOnBoardingWorkflow, loscommon.LoanOnBoardingWorkflowName)
+	w.WorkflowHelper.RegisterWorkflowWithAlias(w.loanOnBoardingWorkflow, model.LoanOnBoardingWorkflowName)
 
-	w.LosHelper.RegisterActivity(w.createNewAppActivity)
-	w.LosHelper.RegisterActivity(w.submitFormOneActivity)
-	w.LosHelper.RegisterActivity(w.submitFormTwoActivity)
-	w.LosHelper.RegisterActivity(w.submitDE1Activity)
-	w.LosHelper.RegisterActivity(w.approveActivity)
-	w.LosHelper.RegisterActivity(w.rejectActivity)
-	w.LosHelper.RegisterActivity(w.cancelActivity)
+	w.WorkflowHelper.RegisterActivity(w.createNewAppActivity)
+	w.WorkflowHelper.RegisterActivity(w.submitFormOneActivity)
+	w.WorkflowHelper.RegisterActivity(w.submitFormTwoActivity)
+	w.WorkflowHelper.RegisterActivity(w.submitDE1Activity)
+	w.WorkflowHelper.RegisterActivity(w.approveActivity)
+	w.WorkflowHelper.RegisterActivity(w.rejectActivity)
+	w.WorkflowHelper.RegisterActivity(w.cancelActivity)
 }
 
-func (w LosWorkFlowHelper) updateCurrentState(ctx workflow.Context, loanAppID string, state string) {
+func (w WorkflowService) updateCurrentState(ctx workflow.Context, loanAppID string, state string) {
 	info := workflow.GetInfo(ctx)
 	workflowId := info.WorkflowExecution.ID
 	runID := info.WorkflowExecution.RunID
-	_ = w.MongodbHelper.UpdateLoanApplicationTaskToken(loanAppID, state, workflowId, runID)
+	_ = w.MongodbService.UpdateLoanApplicationTaskToken(loanAppID, state, workflowId, runID)
 }
 
-func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (loscommon.State, error) {
+func (w WorkflowService) loanOnBoardingWorkflow(ctx workflow.Context) (model.State, error) {
 
-	ch := workflow.GetSignalChannel(ctx, loscommon.SignalName)
+	ch := workflow.GetSignalChannel(ctx, model.SignalName)
 
 	ao := workflow.ActivityOptions{
 		ScheduleToStartTimeout: 10 * time.Minute,
@@ -81,13 +83,13 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (loscomm
 	logger := workflow.GetLogger(ctx)
 	logger.Info("loan on boarding workflow started")
 
-	state := loscommon.Initialized
-	var content loscommon.Content
+	state := model.Initialized
+	var content model.Content
 
 	activityResult := "NA"
 
-	err := workflow.SetQueryHandler(ctx, loscommon.QueryName, func(includeContent bool) (loscommon.QueryResult, error) {
-		result := loscommon.QueryResult{State: state}
+	err := workflow.SetQueryHandler(ctx, model.QueryName, func(includeContent bool) (model.QueryResult, error) {
+		result := model.QueryResult{State: state}
 		if includeContent {
 			result.Content = content
 		}
@@ -98,7 +100,7 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (loscomm
 	}
 
 	for {
-		var signal loscommon.SignalPayload
+		var signal model.SignalPayload
 		if more := ch.Receive(ctx, &signal); !more {
 			logger.Info("Signal channel closed")
 			return state, cadence.NewCustomError("signal_channel_closed")
@@ -109,9 +111,9 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (loscomm
 
 		content = signal.Content
 		switch signal.Action {
-		case loscommon.Create:
+		case model.Create:
 
-			if !w.checkAllowAction(state, loscommon.Initialized) ||
+			if !w.checkAllowAction(state, model.Initialized) ||
 				signal.Content == nil {
 				continue
 			}
@@ -119,25 +121,25 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (loscomm
 			var appID string
 			json.Unmarshal(content, &appID)
 
-			state = loscommon.Received
+			state = model.Received
 			err := workflow.ExecuteActivity(ctx, w.createNewAppActivity, appID).Get(ctx, &activityResult)
 			if err != nil {
 				logger.Error("Failed to create loan application.")
 			} else {
 				logger.Info("State is now created.")
-				state = loscommon.Created
+				state = model.Created
 
 				w.updateCurrentState(ctx, appID, string(state))
 			}
 
-		case loscommon.SubmitFormOne:
+		case model.SubmitFormOne:
 
-			if !w.checkAllowAction(state, loscommon.Created) ||
+			if !w.checkAllowAction(state, model.Created) ||
 				signal.Content == nil {
 				continue
 			}
 
-			var la loscommon.LoanApplication
+			var la model.LoanApplication
 			json.Unmarshal(content, &la)
 
 			err := workflow.ExecuteActivity(ctx, w.submitFormOneActivity, la).Get(ctx, &activityResult)
@@ -145,19 +147,19 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (loscomm
 				logger.Error("Failed to submit loan application form one.")
 			} else {
 				logger.Info("State is now form one submitted.")
-				state = loscommon.FormOneSubmitted
+				state = model.FormOneSubmitted
 
 				w.updateCurrentState(ctx, la.AppID, string(state))
 			}
 
-		case loscommon.SubmitFormTwo:
+		case model.SubmitFormTwo:
 
-			if !w.checkAllowAction(state, loscommon.FormOneSubmitted) ||
+			if !w.checkAllowAction(state, model.FormOneSubmitted) ||
 				signal.Content == nil {
 				continue
 			}
 
-			var la loscommon.LoanApplication
+			var la model.LoanApplication
 			json.Unmarshal(content, &la)
 
 			err := workflow.ExecuteActivity(ctx, w.submitFormTwoActivity, la).Get(ctx, &activityResult)
@@ -165,14 +167,14 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (loscomm
 				logger.Error("Failed to submit loan application form two.")
 			} else {
 				logger.Info("State is now form two submitted.")
-				state = loscommon.FormTwoSubmitted
+				state = model.FormTwoSubmitted
 
 				w.updateCurrentState(ctx, la.AppID, string(state))
 			}
 
-		case loscommon.SubmitDEOne:
+		case model.SubmitDEOne:
 
-			if !w.checkAllowAction(state, loscommon.FormTwoSubmitted) ||
+			if !w.checkAllowAction(state, model.FormTwoSubmitted) ||
 				signal.Content == nil {
 				continue
 			}
@@ -185,40 +187,40 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (loscomm
 				logger.Error("Failed to submit DE one.")
 			} else {
 				logger.Info("State is now deOneSubmitted.")
-				state = loscommon.DEOneSubmitted
+				state = model.DEOneSubmitted
 
 				w.updateCurrentState(ctx, appID, string(state))
 			}
 
-		case loscommon.DEOneResultNotification:
+		case model.DEOneResultNotification:
 
-			if !w.checkAllowAction(state, loscommon.DEOneSubmitted) ||
+			if !w.checkAllowAction(state, model.DEOneSubmitted) ||
 				signal.Content == nil {
 				continue
 			}
 
-			var r loscommon.DEResult
+			var r model.DEResult
 			json.Unmarshal(content, &r)
 
-			if r.Status == loscommon.Approve {
+			if r.Status == model.Approve {
 				err := workflow.ExecuteActivity(ctx, w.approveActivity, r.AppID).Get(ctx, &activityResult)
 				if err != nil {
 					logger.Error("Failed to approve loan application.")
 				} else {
 					logger.Info("State is now approved.")
-					state = loscommon.Approved
+					state = model.Approved
 
 					w.updateCurrentState(ctx, r.AppID, string(state))
 				}
 				return state, nil
 			}
-			if r.Status == loscommon.Reject {
+			if r.Status == model.Reject {
 				err := workflow.ExecuteActivity(ctx, w.rejectActivity, r.AppID).Get(ctx, &activityResult)
 				if err != nil {
 					logger.Error("Failed to reject loan application.")
 				} else {
 					logger.Info("State is now rejected.")
-					state = loscommon.Rejected
+					state = model.Rejected
 
 					w.updateCurrentState(ctx, r.AppID, string(state))
 				}
@@ -226,9 +228,9 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (loscomm
 			}
 			logger.Error(fmt.Sprintf("Wrong DE result :%v.", r.Status))
 
-		case loscommon.Cancel:
+		case model.Cancel:
 
-			if !w.checkAllowAction(state, loscommon.Approved, loscommon.Rejected) ||
+			if !w.checkAllowAction(state, model.Approved, model.Rejected) ||
 				signal.Content == nil {
 				continue
 			}
@@ -241,7 +243,7 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (loscomm
 				logger.Error("Failed to reject loan application.")
 			} else {
 				logger.Info("State is now canceled.")
-				state = loscommon.Canceled
+				state = model.Canceled
 
 				w.updateCurrentState(ctx, appID, string(state))
 
@@ -251,22 +253,22 @@ func (w LosWorkFlowHelper) loanOnBoardingWorkflow(ctx workflow.Context) (loscomm
 	}
 }
 
-func (w LosWorkFlowHelper) createNewAppActivity(ctx context.Context, loanAppID string) (string, error) {
+func (w WorkflowService) createNewAppActivity(ctx context.Context, loanAppID string) (string, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++createNewAppActivity  started+++++\n " + loanAppID)
 
-	if err := w.MongodbHelper.CreateNewLoanApplication(loanAppID); err != nil {
+	if err := w.MongodbService.CreateNewLoanApplication(loanAppID); err != nil {
 		return "FAIL", err
 	}
 
 	return "SUCCESS", nil
 }
 
-func (w LosWorkFlowHelper) submitFormOneActivity(ctx context.Context, loanApp *loscommon.LoanApplication) (string, error) {
+func (w WorkflowService) submitFormOneActivity(ctx context.Context, loanApp *model.LoanApplication) (string, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++submitFormOneActivity  started+++++\n " + loanApp.AppID)
 
-	_, err := w.MongodbHelper.SaveFormOne(loanApp)
+	_, err := w.MongodbService.SaveFormOne(loanApp)
 	if err != nil {
 		return "FAIL", err
 	}
@@ -274,11 +276,11 @@ func (w LosWorkFlowHelper) submitFormOneActivity(ctx context.Context, loanApp *l
 	return "SUCCESS", nil
 }
 
-func (w LosWorkFlowHelper) submitFormTwoActivity(ctx context.Context, loanApp *loscommon.LoanApplication) (string, error) {
+func (w WorkflowService) submitFormTwoActivity(ctx context.Context, loanApp *model.LoanApplication) (string, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++submitFormTwoActivity  started+++++\n" + loanApp.AppID)
 
-	_, err := w.MongodbHelper.SaveFormTwo(loanApp)
+	_, err := w.MongodbService.SaveFormTwo(loanApp)
 	if err != nil {
 		return "FAIL", err
 	}
@@ -286,37 +288,73 @@ func (w LosWorkFlowHelper) submitFormTwoActivity(ctx context.Context, loanApp *l
 	return "SUCCESS", nil
 }
 
-func (w LosWorkFlowHelper) submitDE1Activity(ctx context.Context, loanAppID string) (string, error) {
+func (w WorkflowService) submitDE1Activity(ctx context.Context, loanAppID string) (string, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++submitDE1Activity  started+++++\n" + loanAppID)
 
-	loanApp, err := w.MongodbHelper.GetLoanApplicationByAppID(loanAppID)
+	loanApp, err := w.MongodbService.GetLoanApplicationByAppID(loanAppID)
 	if err != nil {
 		return "FAIL", err
 	}
 
-	w.RabbitMqHelper.PublishAppDEOne(loanApp)
+	w.RabbitMqService.PublishAppDEOne(loanApp)
 
 	return "SUCCESS", nil
 }
 
-func (w LosWorkFlowHelper) approveActivity(ctx context.Context, loanAppID string) (string, error) {
+func (w WorkflowService) approveActivity(ctx context.Context, loanAppID string) (string, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++approveActivity  started+++++\n" + loanAppID)
 
 	return "SUCCESS", nil
 }
 
-func (w LosWorkFlowHelper) rejectActivity(ctx context.Context, loanAppID string) (string, error) {
+func (w WorkflowService) rejectActivity(ctx context.Context, loanAppID string) (string, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++rejectActivity  started+++++\n" + loanAppID)
 
 	return "SUCCESS", nil
 }
 
-func (w LosWorkFlowHelper) cancelActivity(ctx context.Context, loanAppID string) (string, error) {
+func (w WorkflowService) cancelActivity(ctx context.Context, loanAppID string) (string, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++rejectActivity  started+++++\n" + loanAppID)
 
 	return "SUCCESS", nil
+}
+
+func StartWorkflow(h *loscommon.WorkflowHelper) *workflow.Execution {
+	workflowOptions := client.StartWorkflowOptions{
+		ID:                              "los_" + uuid.New(),
+		TaskList:                        model.ApplicationName,
+		ExecutionStartToCloseTimeout:    20 * time.Minute,
+		DecisionTaskStartToCloseTimeout: 20 * time.Minute,
+	}
+	execution := h.StartWorkflow(workflowOptions, model.LoanOnBoardingWorkflowName)
+	h.Logger.Info("Started work flow!", zap.String("WorkflowId", execution.ID), zap.String("RunId", execution.RunID))
+	return execution
+}
+
+func QueryApplicationState(m *MongodbService, h *loscommon.WorkflowHelper, appID string) *model.QueryResult {
+
+	loanApp, err := m.GetLoanApplicationByAppID(appID)
+
+	if err != nil {
+		return nil
+	}
+
+	var result model.QueryResult
+	err = h.ConsistentQueryWorkflow(&result, loanApp.WorkflowID, loanApp.RunID, model.QueryName, true)
+	if err != nil {
+		panic("failed to query workflow")
+	}
+
+	return &result
+}
+
+func AssertState(expected, actual model.State) {
+	if expected != actual {
+		message := fmt.Sprintf("Workflow in wrong state. Expected %v Actual %v", expected, actual)
+		panic(message)
+	}
 }

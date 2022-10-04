@@ -1,6 +1,8 @@
-package common
+package service
 
 import (
+	"cadence-los-workflow/common"
+	"cadence-los-workflow/model"
 	"encoding/json"
 	"fmt"
 	"github.com/streadway/amqp"
@@ -9,7 +11,7 @@ import (
 )
 
 type (
-	RabbitMqHelper struct {
+	RabbitMqService struct {
 		amqpConnection *amqp.Connection
 		inQueueName    string
 		outQueueName   string
@@ -22,7 +24,7 @@ type (
 	}
 )
 
-func NewRabbitMqHelper(config RabbitMqConfig) *RabbitMqHelper {
+func NewRabbitMqService(config RabbitMqConfig) *RabbitMqService {
 
 	amqpConnection, err := amqp.Dial(config.RabbitMqUri)
 	if err != nil {
@@ -33,14 +35,14 @@ func NewRabbitMqHelper(config RabbitMqConfig) *RabbitMqHelper {
 	inQueueName := config.InQueueName
 	outQueueName := config.OutQueueName
 
-	return &RabbitMqHelper{
+	return &RabbitMqService{
 		amqpConnection: amqpConnection,
 		inQueueName:    inQueueName,
 		outQueueName:   outQueueName,
 	}
 }
 
-func (r *RabbitMqHelper) PublishAppDEOne(payload *LoanApplication) {
+func (r *RabbitMqService) PublishAppDEOne(payload *model.LoanApplication) {
 
 	fmt.Println("Call PublishAppDEOne API", payload)
 
@@ -49,14 +51,14 @@ func (r *RabbitMqHelper) PublishAppDEOne(payload *LoanApplication) {
 	publishMessage(r, queueName, data)
 }
 
-func (r *RabbitMqHelper) PublishDEResult(payload *DEResult) {
+func (r *RabbitMqService) PublishDEResult(payload *model.DEResult) {
 
 	data, _ := json.Marshal(payload)
 	queueName := r.inQueueName
 	publishMessage(r, queueName, data)
 }
 
-func publishMessage(r *RabbitMqHelper, queueName string, data []byte) {
+func publishMessage(r *RabbitMqService, queueName string, data []byte) {
 	publishChannelAmqp, _ := r.amqpConnection.Channel()
 	err := publishChannelAmqp.Publish(
 		"",
@@ -73,7 +75,7 @@ func publishMessage(r *RabbitMqHelper, queueName string, data []byte) {
 	}
 }
 
-func (r *RabbitMqHelper) ConsumeRabbitMqMessage(m *MongodbHelper, h *LosHelper) {
+func (r *RabbitMqService) ConsumeRabbitMqMessage(m *MongodbService, h *common.WorkflowHelper) {
 
 	consumeChannelAmqp, _ := r.amqpConnection.Channel()
 	msgs, _ := consumeChannelAmqp.Consume(
@@ -89,7 +91,7 @@ func (r *RabbitMqHelper) ConsumeRabbitMqMessage(m *MongodbHelper, h *LosHelper) 
 		for d := range msgs {
 			log.Printf("Received a message: %s", d.Body)
 
-			var r DEResult
+			var r model.DEResult
 			json.Unmarshal(d.Body, &r)
 
 			cb, _ := json.Marshal(&r)
@@ -101,9 +103,9 @@ func (r *RabbitMqHelper) ConsumeRabbitMqMessage(m *MongodbHelper, h *LosHelper) 
 
 			h.SignalWorkflow(
 				la.WorkflowID,
-				SignalName,
-				&SignalPayload{
-					Action:  DEOneResultNotification,
+				model.SignalName,
+				&model.SignalPayload{
+					Action:  model.DEOneResultNotification,
 					Content: cb,
 				},
 			)

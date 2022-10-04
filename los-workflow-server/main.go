@@ -2,6 +2,7 @@ package main
 
 import (
 	"cadence-los-workflow/common"
+	"cadence-los-workflow/service"
 	"os"
 )
 
@@ -15,29 +16,29 @@ const (
 )
 
 var (
-	w LosWorkFlowHelper
+	w service.WorkflowService
 )
 
 func init() {
 
-	r := common.NewRabbitMqHelper(common.RabbitMqConfig{
+	r := service.NewRabbitMqService(service.RabbitMqConfig{
 		RabbitMqUri:  os.Getenv(rabbitMqUri),
 		InQueueName:  os.Getenv(rabbitMqInQueue),
 		OutQueueName: os.Getenv(rabbitMqOutQueue),
 	})
 
-	m := common.NewMongodbHelper(common.MongodbConfig{
+	m := service.NewMongodbService(service.MongodbConfig{
 		MongoUri:      os.Getenv(mongoUri),
 		MongoDatabase: os.Getenv(mongoDatabase),
 	})
 
-	var h common.LosHelper
+	var h common.WorkflowHelper
 	h.SetupServiceConfig()
 
-	w = LosWorkFlowHelper{
-		MongodbHelper:  m,
-		LosHelper:      &h,
-		RabbitMqHelper: r,
+	w = service.WorkflowService{
+		MongodbService:  m,
+		WorkflowHelper:  &h,
+		RabbitMqService: r,
 	}
 }
 

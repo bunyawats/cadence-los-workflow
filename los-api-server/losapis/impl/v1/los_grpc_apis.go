@@ -3,6 +3,8 @@ package v1
 import (
 	"cadence-los-workflow/common"
 	los "cadence-los-workflow/los-api-server/losapis/gen/v1"
+	"cadence-los-workflow/model"
+	"cadence-los-workflow/service"
 	"context"
 	"encoding/json"
 	cadence_client "go.uber.org/cadence/client"
@@ -13,17 +15,17 @@ type LosApiServer struct {
 	los.UnimplementedLOSServer
 	Context context.Context
 
-	M *common.MongodbHelper
-	R *common.RabbitMqHelper
-	H *common.LosHelper
+	M *service.MongodbService
+	R *service.RabbitMqService
+	H *common.WorkflowHelper
 	W cadence_client.Client
 }
 
 func NewLosApiServer(
 	cx context.Context,
-	m *common.MongodbHelper,
-	r *common.RabbitMqHelper,
-	h *common.LosHelper,
+	m *service.MongodbService,
+	r *service.RabbitMqService,
+	h *common.WorkflowHelper,
 	w cadence_client.Client,
 ) *LosApiServer {
 
@@ -42,18 +44,18 @@ func (s *LosApiServer) CreateNewApp(_ context.Context, in *los.CreateNewAppReque
 
 	cb, _ := json.Marshal(appID)
 
-	ex := common.StartWorkflow(s.H)
+	ex := service.StartWorkflow(s.H)
 	s.H.SignalWorkflow(
 		ex.ID,
-		common.SignalName,
-		&common.SignalPayload{
-			Action:  common.Create,
+		model.SignalName,
+		&model.SignalPayload{
+			Action:  model.Create,
 			Content: cb,
 		},
 	)
 	time.Sleep(time.Second)
-	st := common.QueryApplicationState(s.M, s.H, appID)
-	common.AssertState(common.Created, st.State)
+	st := service.QueryApplicationState(s.M, s.H, appID)
+	service.AssertState(model.Created, st.State)
 
 	return &los.CreateNewAppResponse{
 		AppID: appID,
@@ -62,7 +64,7 @@ func (s *LosApiServer) CreateNewApp(_ context.Context, in *los.CreateNewAppReque
 
 func (s *LosApiServer) SubmitFormOne(_ context.Context, in *los.SubmitFormOneRequest) (*los.SubmitFormOneResponse, error) {
 
-	r := common.LoanApplication{
+	r := model.LoanApplication{
 		AppID: in.AppID,
 		Fname: in.FName,
 		Lname: in.LName,
@@ -77,15 +79,15 @@ func (s *LosApiServer) SubmitFormOne(_ context.Context, in *los.SubmitFormOneReq
 
 	s.H.SignalWorkflow(
 		id,
-		common.SignalName,
-		&common.SignalPayload{
-			Action:  common.SubmitFormOne,
+		model.SignalName,
+		&model.SignalPayload{
+			Action:  model.SubmitFormOne,
 			Content: cb,
 		},
 	)
 	time.Sleep(time.Second)
-	st := common.QueryApplicationState(s.M, s.H, r.AppID)
-	common.AssertState(common.FormOneSubmitted, st.State)
+	st := service.QueryApplicationState(s.M, s.H, r.AppID)
+	service.AssertState(model.FormOneSubmitted, st.State)
 
 	return &los.SubmitFormOneResponse{
 		LoanApp: &los.LoanApplication{
@@ -98,7 +100,7 @@ func (s *LosApiServer) SubmitFormOne(_ context.Context, in *los.SubmitFormOneReq
 
 func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *los.SubmitFormTwoRequest) (*los.SubmitFormTwoResponse, error) {
 
-	r := common.LoanApplication{
+	r := model.LoanApplication{
 		AppID:   in.AppID,
 		Email:   in.Email,
 		PhoneNo: in.PhoneNo,
@@ -113,15 +115,15 @@ func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *los.SubmitFormTwoReq
 
 	s.H.SignalWorkflow(
 		id,
-		common.SignalName,
-		&common.SignalPayload{
-			Action:  common.SubmitFormTwo,
+		model.SignalName,
+		&model.SignalPayload{
+			Action:  model.SubmitFormTwo,
 			Content: cb,
 		},
 	)
 	time.Sleep(time.Second)
-	st := common.QueryApplicationState(s.M, s.H, r.AppID)
-	common.AssertState(common.FormTwoSubmitted, st.State)
+	st := service.QueryApplicationState(s.M, s.H, r.AppID)
+	service.AssertState(model.FormTwoSubmitted, st.State)
 
 	return &los.SubmitFormTwoResponse{
 		LoanApp: &los.LoanApplication{
@@ -145,16 +147,16 @@ func (s *LosApiServer) SubmitDeOne(_ context.Context, in *los.SubmitDeOneRequest
 
 	s.H.SignalWorkflow(
 		id,
-		common.SignalName,
-		&common.SignalPayload{
-			Action:  common.SubmitDEOne,
+		model.SignalName,
+		&model.SignalPayload{
+			Action:  model.SubmitDEOne,
 			Content: cb,
 		},
 	)
 
 	time.Sleep(time.Second)
-	st := common.QueryApplicationState(s.M, s.H, in.AppID)
-	common.AssertState(common.DEOneSubmitted, st.State)
+	st := service.QueryApplicationState(s.M, s.H, in.AppID)
+	service.AssertState(model.DEOneSubmitted, st.State)
 
 	return &los.SubmitDeOneResponse{
 		AppID: in.AppID,
@@ -163,7 +165,7 @@ func (s *LosApiServer) SubmitDeOne(_ context.Context, in *los.SubmitDeOneRequest
 
 func (s *LosApiServer) NotificationDE1(_ context.Context, in *los.NotificationDE1Request) (*los.NotificationDE1Response, error) {
 
-	s.R.PublishDEResult(&common.DEResult{
+	s.R.PublishDEResult(&model.DEResult{
 		AppID:  in.AppID,
 		Status: in.Status,
 	})
@@ -176,7 +178,7 @@ func (s *LosApiServer) NotificationDE1(_ context.Context, in *los.NotificationDE
 
 func (s *LosApiServer) QueryState(_ context.Context, in *los.QueryStateRequest) (*los.QueryStateResponse, error) {
 
-	st := common.QueryApplicationState(s.M, s.H, in.AppID)
+	st := service.QueryApplicationState(s.M, s.H, in.AppID)
 
 	return &los.QueryStateResponse{
 		LoanAppState: &los.LoanAppState{

@@ -4,6 +4,7 @@ import (
 	"cadence-los-workflow/common"
 	los "cadence-los-workflow/los-api-server/losapis/gen/v1"
 	v1 "cadence-los-workflow/los-api-server/losapis/impl/v1"
+	"cadence-los-workflow/service"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -30,18 +31,18 @@ var (
 
 func init() {
 
-	r := common.NewRabbitMqHelper(common.RabbitMqConfig{
+	r := service.NewRabbitMqService(service.RabbitMqConfig{
 		RabbitMqUri:  os.Getenv(rabbitMqUri),
 		InQueueName:  os.Getenv(rabbitMqInQueue),
 		OutQueueName: os.Getenv(rabbitMqOutQueue),
 	})
 
-	m := common.NewMongodbHelper(common.MongodbConfig{
+	m := service.NewMongodbService(service.MongodbConfig{
 		MongoUri:      os.Getenv(mongoUri),
 		MongoDatabase: os.Getenv(mongoDatabase),
 	})
 
-	var h common.LosHelper
+	var h common.WorkflowHelper
 	h.SetupServiceConfig()
 
 	var err error

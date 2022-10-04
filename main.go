@@ -4,6 +4,7 @@ import (
 	"cadence-los-workflow/common"
 	los "cadence-los-workflow/los-api-server/losapis/gen/v1"
 	v1 "cadence-los-workflow/los-api-server/losapis/impl/v1"
+	"cadence-los-workflow/service"
 	"context"
 	"fmt"
 	_ "github.com/rookie-ninja/rk-boot/v2"
@@ -41,19 +42,19 @@ func init() {
 
 	boot = rkboot.NewBoot()
 
-	r := common.NewRabbitMqHelper(common.RabbitMqConfig{
+	r := service.NewRabbitMqService(service.RabbitMqConfig{
 		RabbitMqUri:  getConfigString(rabbitMqUri),
 		InQueueName:  getConfigString(rabbitMqInQueue),
 		OutQueueName: getConfigString(rabbitMqOutQueue),
 	})
 
-	m := common.NewMongodbHelperWithCallBack(
+	m := service.NewMongodbHelperWithCallBack(
 		func() *mongo.Database {
 			return rkmongo.GetMongoDB("ssc-mongo", "test")
 		},
 	)
 
-	var h common.LosHelper
+	var h common.WorkflowHelper
 	h.SetupServiceConfig()
 
 	var err error

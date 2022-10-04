@@ -1,4 +1,4 @@
-package common
+package model
 
 const (
 	ApplicationName            = "loanOnBoarding"

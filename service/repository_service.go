@@ -1,6 +1,7 @@
-package common
+package service
 
 import (
+	"cadence-los-workflow/model"
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,7 +15,7 @@ const (
 )
 
 type (
-	MongodbHelper struct {
+	MongodbService struct {
 		getCon         func() *mongo.Database
 		collectionName string
 		//mongoCollection *mongo.Collection
@@ -27,7 +28,7 @@ type (
 	}
 )
 
-func NewMongodbHelper(config MongodbConfig) *MongodbHelper {
+func NewMongodbService(config MongodbConfig) *MongodbService {
 
 	ctx := context.Background()
 
@@ -43,26 +44,26 @@ func NewMongodbHelper(config MongodbConfig) *MongodbHelper {
 		return mongoDBClient.Database(config.MongoDatabase)
 	}
 
-	return &MongodbHelper{
+	return &MongodbService{
 		ctx:            ctx,
 		getCon:         getConn,
 		collectionName: loanApplicationCollectionName,
 	}
 }
 
-func NewMongodbHelperWithCallBack(getDB func() *mongo.Database) *MongodbHelper {
-	return &MongodbHelper{
+func NewMongodbHelperWithCallBack(getDB func() *mongo.Database) *MongodbService {
+	return &MongodbService{
 		ctx:            context.Background(),
 		getCon:         getDB,
 		collectionName: loanApplicationCollectionName,
 	}
 }
 
-func (m *MongodbHelper) getCollection() *mongo.Collection {
+func (m *MongodbService) getCollection() *mongo.Collection {
 	return m.getCon().Collection(m.collectionName)
 }
 
-func (m *MongodbHelper) UpdateLoanApplicationTaskToken(appID string, lastState string, workflowID string, runID string) error {
+func (m *MongodbService) UpdateLoanApplicationTaskToken(appID string, lastState string, workflowID string, runID string) error {
 
 	filter := bson.M{
 		"appID": bson.M{
@@ -94,7 +95,7 @@ func (m *MongodbHelper) UpdateLoanApplicationTaskToken(appID string, lastState s
 	return err
 }
 
-func (m *MongodbHelper) CreateNewLoanApplication(appID string) error {
+func (m *MongodbService) CreateNewLoanApplication(appID string) error {
 
 	filter := bson.M{
 		"appID": bson.M{
@@ -102,7 +103,7 @@ func (m *MongodbHelper) CreateNewLoanApplication(appID string) error {
 		},
 	}
 
-	if err := m.getCollection().FindOne(m.ctx, filter).Decode(&LoanApplication{}); err == nil {
+	if err := m.getCollection().FindOne(m.ctx, filter).Decode(&model.LoanApplication{}); err == nil {
 		return fmt.Errorf("Application ID: `%v` duplicated", appID)
 	}
 
@@ -119,7 +120,7 @@ func (m *MongodbHelper) CreateNewLoanApplication(appID string) error {
 	return nil
 }
 
-func (m *MongodbHelper) CreateLoanApplication(loanApp *LoanApplication) error {
+func (m *MongodbService) CreateLoanApplication(loanApp *model.LoanApplication) error {
 
 	filter := bson.M{
 		"appID": bson.M{
@@ -127,7 +128,7 @@ func (m *MongodbHelper) CreateLoanApplication(loanApp *LoanApplication) error {
 		},
 	}
 
-	if err := m.getCollection().FindOne(m.ctx, filter).Decode(&LoanApplication{}); err == nil {
+	if err := m.getCollection().FindOne(m.ctx, filter).Decode(&model.LoanApplication{}); err == nil {
 		return fmt.Errorf("Application ID: `%v` duplicated", loanApp.AppID)
 	}
 
@@ -146,7 +147,7 @@ func (m *MongodbHelper) CreateLoanApplication(loanApp *LoanApplication) error {
 	return nil
 }
 
-func (m *MongodbHelper) SaveFormOne(loanApp *LoanApplication) (*LoanApplication, error) {
+func (m *MongodbService) SaveFormOne(loanApp *model.LoanApplication) (*model.LoanApplication, error) {
 
 	filter := bson.M{
 		"appID": bson.M{
@@ -174,13 +175,13 @@ func (m *MongodbHelper) SaveFormOne(loanApp *LoanApplication) (*LoanApplication,
 		return nil, fmt.Errorf("Application ID: `%v` not found", loanApp.AppID)
 	}
 
-	updatedLoanApp := LoanApplication{}
+	updatedLoanApp := model.LoanApplication{}
 	m.getCollection().FindOne(m.ctx, filter).Decode(&updatedLoanApp)
 
 	return &updatedLoanApp, err
 }
 
-func (m *MongodbHelper) SaveFormTwo(loanApp *LoanApplication) (*LoanApplication, error) {
+func (m *MongodbService) SaveFormTwo(loanApp *model.LoanApplication) (*model.LoanApplication, error) {
 
 	filter := bson.M{
 		"appID": bson.M{
@@ -208,13 +209,13 @@ func (m *MongodbHelper) SaveFormTwo(loanApp *LoanApplication) (*LoanApplication,
 		return nil, fmt.Errorf("Application ID: `%v` not found", loanApp.AppID)
 	}
 
-	updatedLoanApp := LoanApplication{}
+	updatedLoanApp := model.LoanApplication{}
 	m.getCollection().FindOne(m.ctx, filter).Decode(&updatedLoanApp)
 
 	return &updatedLoanApp, err
 }
 
-func (m *MongodbHelper) GetWorkflowIdByAppID(appID string) (string, error) {
+func (m *MongodbService) GetWorkflowIdByAppID(appID string) (string, error) {
 
 	filter := bson.M{
 		"appID": bson.M{
@@ -222,7 +223,7 @@ func (m *MongodbHelper) GetWorkflowIdByAppID(appID string) (string, error) {
 		},
 	}
 
-	loanApplication := &LoanApplication{}
+	loanApplication := &model.LoanApplication{}
 	if err := m.getCollection().FindOne(m.ctx, filter).Decode(loanApplication); err != nil {
 		return "NA", err
 	}
@@ -230,7 +231,7 @@ func (m *MongodbHelper) GetWorkflowIdByAppID(appID string) (string, error) {
 	return loanApplication.WorkflowID, nil
 }
 
-func (m *MongodbHelper) GetLoanApplicationByAppID(appID string) (*LoanApplication, error) {
+func (m *MongodbService) GetLoanApplicationByAppID(appID string) (*model.LoanApplication, error) {
 
 	filter := bson.M{
 		"appID": bson.M{
@@ -238,7 +239,7 @@ func (m *MongodbHelper) GetLoanApplicationByAppID(appID string) (*LoanApplicatio
 		},
 	}
 
-	loanApplication := &LoanApplication{}
+	loanApplication := &model.LoanApplication{}
 	if err := m.getCollection().FindOne(m.ctx, filter).Decode(loanApplication); err != nil {
 		return nil, err
 	}
