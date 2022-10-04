@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	w service.WorkflowService
+	workflowService service.WorkflowService
 )
 
 func init() {
@@ -35,7 +35,7 @@ func init() {
 	var h common.WorkflowHelper
 	h.SetupServiceConfig()
 
-	w = service.WorkflowService{
+	workflowService = service.WorkflowService{
 		MongodbService:  m,
 		WorkflowHelper:  &h,
 		RabbitMqService: r,
@@ -44,8 +44,8 @@ func init() {
 
 func main() {
 
-	w.RegisterWorkflowAndActivity()
-	w.StartWorkers()
+	workflowService.RegisterWorkflowAndActivity()
+	workflowService.StartWorkers()
 
 	select {}
 }

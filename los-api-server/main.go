@@ -25,8 +25,8 @@ const (
 )
 
 var (
-	g GinHandlerHelper
-	l *v1.LosApiServer
+	ginHandlerHelper GinHandlerHelper
+	losApiServer     *v1.LosApiServer
 )
 
 func init() {
@@ -51,19 +51,21 @@ func init() {
 		panic(err)
 	}
 
-	g = GinHandlerHelper{
+	w := service.WorkflowService{
 		MongodbService:  m,
-		RabbitMqService: r,
 		WorkflowHelper:  &h,
-		CadenceClient:   workflowClient,
+		RabbitMqService: r,
 	}
 
-	l = &v1.LosApiServer{
-		Context:         context.Background(),
-		MongodbService:  m,
-		RabbitMqService: r,
-		WorkflowHelper:  &h,
-		CadenceClient:   workflowClient,
+	ginHandlerHelper = GinHandlerHelper{
+		Service:       w,
+		CadenceClient: workflowClient,
+	}
+
+	losApiServer = &v1.LosApiServer{
+		Context:       context.Background(),
+		Service:       w,
+		CadenceClient: workflowClient,
 	}
 
 }
@@ -77,7 +79,7 @@ func main() {
 func runGin() error {
 
 	router := gin.Default()
-	g.RegisterRouter(router)
+	ginHandlerHelper.RegisterRouter(router)
 
 	log.Printf(" [*] Waiting for message. To exit press CYRL+C")
 	err := router.Run(":5500")
@@ -96,7 +98,7 @@ func runGrpc() error {
 
 	s := grpc.NewServer()
 	reflection.Register(s)
-	los.RegisterLOSServer(s, l)
+	los.RegisterLOSServer(s, losApiServer)
 
 	log.Println("Listening on", listenOn)
 	if err := s.Serve(listener); err != nil {

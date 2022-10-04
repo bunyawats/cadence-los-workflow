@@ -17,31 +17,31 @@ const (
 )
 
 var (
-	h common.WorkflowHelper
-	r *service.RabbitMqService
-	m *service.MongodbService
+	workflowHelper  common.WorkflowHelper
+	rabbitMqService *service.RabbitMqService
+	mongodbService  *service.MongodbService
 )
 
 func init() {
 
-	r = service.NewRabbitMqService(service.RabbitMqConfig{
+	rabbitMqService = service.NewRabbitMqService(service.RabbitMqConfig{
 		RabbitMqUri:  os.Getenv(rabbitMqUri),
 		InQueueName:  os.Getenv(rabbitMqInQueue),
 		OutQueueName: os.Getenv(rabbitMqOutQueue),
 	})
 
-	m = service.NewMongodbService(service.MongodbConfig{
+	mongodbService = service.NewMongodbService(service.MongodbConfig{
 		MongoUri:      os.Getenv(mongoUri),
 		MongoDatabase: os.Getenv(mongoDatabase),
 	})
 
-	h.SetupServiceConfig()
+	workflowHelper.SetupServiceConfig()
 }
 
 func main() {
 
 	fmt.Println("start messaging listener")
-	r.ConsumeRabbitMqMessage(m, &h)
+	rabbitMqService.ConsumeRabbitMqMessage(mongodbService, &workflowHelper)
 
 	select {}
 }

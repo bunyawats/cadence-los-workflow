@@ -331,16 +331,16 @@ func StartWorkflow(h *common.WorkflowHelper) *workflow.Execution {
 	return execution
 }
 
-func QueryApplicationState(m *MongodbService, h *common.WorkflowHelper, appID string) *model.QueryResult {
+func (w WorkflowService) QueryApplicationState(appID string) *model.QueryResult {
 
-	loanApp, err := m.GetLoanApplicationByAppID(appID)
+	loanApp, err := w.MongodbService.GetLoanApplicationByAppID(appID)
 
 	if err != nil {
 		return nil
 	}
 
 	var result model.QueryResult
-	err = h.ConsistentQueryWorkflow(&result, loanApp.WorkflowID, loanApp.RunID, model.QueryName, true)
+	err = w.WorkflowHelper.ConsistentQueryWorkflow(&result, loanApp.WorkflowID, loanApp.RunID, model.QueryName, true)
 	if err != nil {
 		panic("failed to query workflow")
 	}

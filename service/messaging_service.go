@@ -110,8 +110,8 @@ func (r *RabbitMqService) ConsumeRabbitMqMessage(m *MongodbService, h *common.Wo
 				},
 			)
 			time.Sleep(time.Second * 5)
-			state := QueryApplicationState(m, h, r.AppID)
-			fmt.Printf("current state: %v", state)
+			//state := QueryApplicationState(m, h, r.AppID)
+			//fmt.Printf("current state: %v", state)
 		}
 	}()
 }

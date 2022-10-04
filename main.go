@@ -57,12 +57,16 @@ func init() {
 		panic(err)
 	}
 
-	losApiServer = &v1.LosApiServer{
-		Context:         context.Background(),
+	w := service.WorkflowService{
 		MongodbService:  m,
-		RabbitMqService: r,
 		WorkflowHelper:  &h,
-		CadenceClient:   workflowClient,
+		RabbitMqService: r,
+	}
+
+	losApiServer = &v1.LosApiServer{
+		Context:       context.Background(),
+		Service:       w,
+		CadenceClient: workflowClient,
 	}
 
 }
