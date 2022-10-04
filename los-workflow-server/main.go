@@ -21,24 +21,24 @@ var (
 
 func init() {
 
-	r := service.NewRabbitMqService(service.RabbitMqConfig{
-		RabbitMqUri:  os.Getenv(rabbitMqUri),
-		InQueueName:  os.Getenv(rabbitMqInQueue),
-		OutQueueName: os.Getenv(rabbitMqOutQueue),
-	})
-
-	m := service.NewMongodbService(service.MongodbConfig{
+	mg := service.NewMongodbService(service.MongodbConfig{
 		MongoUri:      os.Getenv(mongoUri),
 		MongoDatabase: os.Getenv(mongoDatabase),
 	})
 
-	var h common.WorkflowHelper
-	h.SetupServiceConfig()
+	var wh common.WorkflowHelper
+	wh.SetupServiceConfig()
+
+	rb := service.NewRabbitMqService(service.RabbitMqConfig{
+		RabbitMqUri:  os.Getenv(rabbitMqUri),
+		InQueueName:  os.Getenv(rabbitMqInQueue),
+		OutQueueName: os.Getenv(rabbitMqOutQueue),
+	}, mg, &wh)
 
 	workflowService = service.WorkflowService{
-		MongodbService:  m,
-		WorkflowHelper:  &h,
-		RabbitMqService: r,
+		MongodbService:  mg,
+		WorkflowHelper:  &wh,
+		RabbitMqService: rb,
 	}
 }
 

@@ -17,31 +17,32 @@ const (
 )
 
 var (
-	workflowHelper  common.WorkflowHelper
 	rabbitMqService *service.RabbitMqService
-	mongodbService  *service.MongodbService
 )
 
 func init() {
 
-	rabbitMqService = service.NewRabbitMqService(service.RabbitMqConfig{
-		RabbitMqUri:  os.Getenv(rabbitMqUri),
-		InQueueName:  os.Getenv(rabbitMqInQueue),
-		OutQueueName: os.Getenv(rabbitMqOutQueue),
-	})
-
-	mongodbService = service.NewMongodbService(service.MongodbConfig{
+	mg := service.NewMongodbService(service.MongodbConfig{
 		MongoUri:      os.Getenv(mongoUri),
 		MongoDatabase: os.Getenv(mongoDatabase),
 	})
 
-	workflowHelper.SetupServiceConfig()
+	var wh common.WorkflowHelper
+	wh.SetupServiceConfig()
+
+	rabbitMqService = service.NewRabbitMqService(
+		service.RabbitMqConfig{
+			RabbitMqUri:  os.Getenv(rabbitMqUri),
+			InQueueName:  os.Getenv(rabbitMqInQueue),
+			OutQueueName: os.Getenv(rabbitMqOutQueue),
+		}, mg, &wh)
+
 }
 
 func main() {
 
 	fmt.Println("start messaging listener")
-	rabbitMqService.ConsumeRabbitMqMessage(mongodbService, &workflowHelper)
+	rabbitMqService.ConsumeRabbitMqMessage()
 
 	select {}
 }

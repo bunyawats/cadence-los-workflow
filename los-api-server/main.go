@@ -31,40 +31,40 @@ var (
 
 func init() {
 
-	r := service.NewRabbitMqService(service.RabbitMqConfig{
-		RabbitMqUri:  os.Getenv(rabbitMqUri),
-		InQueueName:  os.Getenv(rabbitMqInQueue),
-		OutQueueName: os.Getenv(rabbitMqOutQueue),
-	})
-
-	m := service.NewMongodbService(service.MongodbConfig{
+	mg := service.NewMongodbService(service.MongodbConfig{
 		MongoUri:      os.Getenv(mongoUri),
 		MongoDatabase: os.Getenv(mongoDatabase),
 	})
 
-	var h common.WorkflowHelper
-	h.SetupServiceConfig()
+	var wh common.WorkflowHelper
+	wh.SetupServiceConfig()
+
+	r := service.NewRabbitMqService(service.RabbitMqConfig{
+		RabbitMqUri:  os.Getenv(rabbitMqUri),
+		InQueueName:  os.Getenv(rabbitMqInQueue),
+		OutQueueName: os.Getenv(rabbitMqOutQueue),
+	}, mg, &wh)
 
 	var err error
-	workflowClient, err := h.Builder.BuildCadenceClient()
+	workflowClient, err := wh.Builder.BuildCadenceClient()
 	if err != nil {
 		panic(err)
 	}
 
-	w := service.WorkflowService{
-		MongodbService:  m,
-		WorkflowHelper:  &h,
+	wf := service.WorkflowService{
+		MongodbService:  mg,
+		WorkflowHelper:  &wh,
 		RabbitMqService: r,
 	}
 
 	ginHandlerHelper = GinHandlerHelper{
-		Service:       w,
+		Service:       wf,
 		CadenceClient: workflowClient,
 	}
 
 	losApiServer = &v1.LosApiServer{
 		Context:       context.Background(),
-		Service:       w,
+		Service:       wf,
 		CadenceClient: workflowClient,
 	}
 

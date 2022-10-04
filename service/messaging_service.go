@@ -15,6 +15,9 @@ type (
 		amqpConnection *amqp.Connection
 		inQueueName    string
 		outQueueName   string
+
+		*MongodbService
+		*common.WorkflowHelper
 	}
 
 	RabbitMqConfig struct {
@@ -24,7 +27,7 @@ type (
 	}
 )
 
-func NewRabbitMqService(config RabbitMqConfig) *RabbitMqService {
+func NewRabbitMqService(config RabbitMqConfig, mg *MongodbService, wh *common.WorkflowHelper) *RabbitMqService {
 
 	amqpConnection, err := amqp.Dial(config.RabbitMqUri)
 	if err != nil {
@@ -39,6 +42,9 @@ func NewRabbitMqService(config RabbitMqConfig) *RabbitMqService {
 		amqpConnection: amqpConnection,
 		inQueueName:    inQueueName,
 		outQueueName:   outQueueName,
+
+		MongodbService: mg,
+		WorkflowHelper: wh,
 	}
 }
 
@@ -75,7 +81,7 @@ func publishMessage(r *RabbitMqService, queueName string, data []byte) {
 	}
 }
 
-func (r *RabbitMqService) ConsumeRabbitMqMessage(m *MongodbService, h *common.WorkflowHelper) {
+func (r *RabbitMqService) ConsumeRabbitMqMessage() {
 
 	consumeChannelAmqp, _ := r.amqpConnection.Channel()
 	msgs, _ := consumeChannelAmqp.Consume(
@@ -91,17 +97,17 @@ func (r *RabbitMqService) ConsumeRabbitMqMessage(m *MongodbService, h *common.Wo
 		for d := range msgs {
 			log.Printf("Received a message: %s", d.Body)
 
-			var r model.DEResult
+			var dr model.DEResult
 			json.Unmarshal(d.Body, &r)
 
 			cb, _ := json.Marshal(&r)
 
-			la, err := m.GetLoanApplicationByAppID(r.AppID)
+			la, err := r.GetLoanApplicationByAppID(dr.AppID)
 			if err != nil {
 				return
 			}
 
-			h.SignalWorkflow(
+			r.SignalWorkflow(
 				la.WorkflowID,
 				model.SignalName,
 				&model.SignalPayload{
