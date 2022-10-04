@@ -20,9 +20,9 @@ import (
 
 type (
 	WorkflowService struct {
-		MongodbService  *MongodbService
-		WorkflowHelper  *common.WorkflowHelper
-		RabbitMqService *RabbitMqService
+		*MongodbService
+		*common.WorkflowHelper
+		*RabbitMqService
 	}
 )
 
@@ -67,7 +67,7 @@ func (w WorkflowService) updateCurrentState(ctx workflow.Context, loanAppID stri
 	info := workflow.GetInfo(ctx)
 	workflowId := info.WorkflowExecution.ID
 	runID := info.WorkflowExecution.RunID
-	_ = w.MongodbService.UpdateLoanApplicationTaskToken(loanAppID, state, workflowId, runID)
+	_ = w.UpdateLoanApplicationTaskToken(loanAppID, state, workflowId, runID)
 }
 
 func (w WorkflowService) loanOnBoardingWorkflow(ctx workflow.Context) (model.State, error) {
@@ -253,7 +253,7 @@ func (w WorkflowService) createNewAppActivity(ctx context.Context, loanAppID str
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++createNewAppActivity  started+++++\n " + loanAppID)
 
-	if err := w.MongodbService.CreateNewLoanApplication(loanAppID); err != nil {
+	if err := w.CreateNewLoanApplication(loanAppID); err != nil {
 		return "FAIL", err
 	}
 
@@ -264,7 +264,7 @@ func (w WorkflowService) submitFormOneActivity(ctx context.Context, loanApp *mod
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++submitFormOneActivity  started+++++\n " + loanApp.AppID)
 
-	_, err := w.MongodbService.SaveFormOne(loanApp)
+	_, err := w.SaveFormOne(loanApp)
 	if err != nil {
 		return "FAIL", err
 	}
@@ -276,7 +276,7 @@ func (w WorkflowService) submitFormTwoActivity(ctx context.Context, loanApp *mod
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++submitFormTwoActivity  started+++++\n" + loanApp.AppID)
 
-	_, err := w.MongodbService.SaveFormTwo(loanApp)
+	_, err := w.SaveFormTwo(loanApp)
 	if err != nil {
 		return "FAIL", err
 	}
@@ -288,7 +288,7 @@ func (w WorkflowService) submitDE1Activity(ctx context.Context, loanAppID string
 	logger := activity.GetLogger(ctx)
 	logger.Info("\n\n+++++submitDE1Activity  started+++++\n" + loanAppID)
 
-	loanApp, err := w.MongodbService.GetLoanApplicationByAppID(loanAppID)
+	loanApp, err := w.GetLoanApplicationByAppID(loanAppID)
 	if err != nil {
 		return "FAIL", err
 	}
@@ -327,20 +327,30 @@ func (w WorkflowService) StartWorkflow() *workflow.Execution {
 		DecisionTaskStartToCloseTimeout: 20 * time.Minute,
 	}
 	execution := w.WorkflowHelper.StartWorkflow(workflowOptions, model.LoanOnBoardingWorkflowName)
-	w.WorkflowHelper.Logger.Info("Started work flow!", zap.String("WorkflowId", execution.ID), zap.String("RunId", execution.RunID))
+	w.WorkflowHelper.Logger.Info(
+		"Started work flow!",
+		zap.String("WorkflowId", execution.ID),
+		zap.String("RunId", execution.RunID),
+	)
 	return execution
 }
 
 func (w WorkflowService) QueryApplicationState(appID string) *model.QueryResult {
 
-	loanApp, err := w.MongodbService.GetLoanApplicationByAppID(appID)
+	loanApp, err := w.GetLoanApplicationByAppID(appID)
 
 	if err != nil {
 		return nil
 	}
 
 	var result model.QueryResult
-	err = w.WorkflowHelper.ConsistentQueryWorkflow(&result, loanApp.WorkflowID, loanApp.RunID, model.QueryName, true)
+	err = w.ConsistentQueryWorkflow(
+		&result,
+		loanApp.WorkflowID,
+		loanApp.RunID,
+		model.QueryName,
+		true,
+	)
 	if err != nil {
 		panic("failed to query workflow")
 	}
