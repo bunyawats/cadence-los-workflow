@@ -11,7 +11,7 @@ mongo:
 logger:
   - name: ssc-logger
     zap:
-      outputPaths: ["logs/log.log"]
+      outputPaths: [ "logs/log.log" ]
       encoding: json
 grpc:
   - name: ssc-grpc

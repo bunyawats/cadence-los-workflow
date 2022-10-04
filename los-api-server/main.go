@@ -58,14 +58,14 @@ func init() {
 	}
 
 	ginHandlerHelper = GinHandlerHelper{
-		Service:       wf,
-		CadenceClient: workflowClient,
+		WorkflowService: wf,
+		Client:          workflowClient,
 	}
 
 	losApiServer = &v1.LosApiServer{
-		Context:       context.Background(),
-		Service:       wf,
-		CadenceClient: workflowClient,
+		Context:         context.Background(),
+		WorkflowService: wf,
+		Client:          workflowClient,
 	}
 
 }

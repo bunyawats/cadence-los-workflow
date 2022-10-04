@@ -13,9 +13,9 @@ import (
 
 type LosApiServer struct {
 	v1.UnimplementedLOSServer
-	Context       context.Context
-	CadenceClient client.Client
-	Service       service.WorkflowService
+	Context context.Context
+	client.Client
+	service.WorkflowService
 }
 
 func (s *LosApiServer) CreateNewApp(_ context.Context, in *v1.CreateNewAppRequest) (*v1.CreateNewAppResponse, error) {
@@ -24,8 +24,8 @@ func (s *LosApiServer) CreateNewApp(_ context.Context, in *v1.CreateNewAppReques
 
 	cb, _ := json.Marshal(appID)
 
-	ex := s.Service.StartWorkflow()
-	s.Service.WorkflowHelper.SignalWorkflow(
+	ex := s.WorkflowService.StartWorkflow()
+	s.WorkflowHelper.SignalWorkflow(
 		ex.ID,
 		model.SignalName,
 		&model.SignalPayload{
@@ -34,7 +34,7 @@ func (s *LosApiServer) CreateNewApp(_ context.Context, in *v1.CreateNewAppReques
 		},
 	)
 	time.Sleep(time.Second)
-	st := s.Service.QueryApplicationState(appID)
+	st := s.QueryApplicationState(appID)
 	service.AssertState(model.Created, st.State)
 
 	return &v1.CreateNewAppResponse{
@@ -50,14 +50,14 @@ func (s *LosApiServer) SubmitFormOne(_ context.Context, in *v1.SubmitFormOneRequ
 		Lname: in.LName,
 	}
 
-	id, err := s.Service.MongodbService.GetWorkflowIdByAppID(r.AppID)
+	id, err := s.GetWorkflowIdByAppID(r.AppID)
 	if err != nil {
 		return nil, err
 	}
 
 	cb, _ := json.Marshal(&r)
 
-	s.Service.WorkflowHelper.SignalWorkflow(
+	s.WorkflowHelper.SignalWorkflow(
 		id,
 		model.SignalName,
 		&model.SignalPayload{
@@ -66,7 +66,7 @@ func (s *LosApiServer) SubmitFormOne(_ context.Context, in *v1.SubmitFormOneRequ
 		},
 	)
 	time.Sleep(time.Second)
-	st := s.Service.QueryApplicationState(r.AppID)
+	st := s.QueryApplicationState(r.AppID)
 	service.AssertState(model.FormOneSubmitted, st.State)
 
 	return &v1.SubmitFormOneResponse{
@@ -86,14 +86,14 @@ func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *v1.SubmitFormTwoRequ
 		PhoneNo: in.PhoneNo,
 	}
 
-	id, err := s.Service.MongodbService.GetWorkflowIdByAppID(r.AppID)
+	id, err := s.GetWorkflowIdByAppID(r.AppID)
 	if err != nil {
 		return nil, err
 	}
 
 	cb, _ := json.Marshal(&r)
 
-	s.Service.WorkflowHelper.SignalWorkflow(
+	s.WorkflowHelper.SignalWorkflow(
 		id,
 		model.SignalName,
 		&model.SignalPayload{
@@ -102,7 +102,7 @@ func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *v1.SubmitFormTwoRequ
 		},
 	)
 	time.Sleep(time.Second)
-	st := s.Service.QueryApplicationState(r.AppID)
+	st := s.QueryApplicationState(r.AppID)
 	service.AssertState(model.FormTwoSubmitted, st.State)
 
 	return &v1.SubmitFormTwoResponse{
@@ -118,14 +118,14 @@ func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *v1.SubmitFormTwoRequ
 
 func (s *LosApiServer) SubmitDeOne(_ context.Context, in *v1.SubmitDeOneRequest) (*v1.SubmitDeOneResponse, error) {
 
-	id, err := s.Service.MongodbService.GetWorkflowIdByAppID(in.AppID)
+	id, err := s.MongodbService.GetWorkflowIdByAppID(in.AppID)
 	if err != nil {
 		return nil, err
 	}
 
 	cb, _ := json.Marshal(in.AppID)
 
-	s.Service.WorkflowHelper.SignalWorkflow(
+	s.WorkflowHelper.SignalWorkflow(
 		id,
 		model.SignalName,
 		&model.SignalPayload{
@@ -135,7 +135,7 @@ func (s *LosApiServer) SubmitDeOne(_ context.Context, in *v1.SubmitDeOneRequest)
 	)
 
 	time.Sleep(time.Second)
-	st := s.Service.QueryApplicationState(in.AppID)
+	st := s.QueryApplicationState(in.AppID)
 	service.AssertState(model.DEOneSubmitted, st.State)
 
 	return &v1.SubmitDeOneResponse{
@@ -145,7 +145,7 @@ func (s *LosApiServer) SubmitDeOne(_ context.Context, in *v1.SubmitDeOneRequest)
 
 func (s *LosApiServer) NotificationDE1(_ context.Context, in *v1.NotificationDE1Request) (*v1.NotificationDE1Response, error) {
 
-	s.Service.RabbitMqService.PublishDEResult(&model.DEResult{
+	s.PublishDEResult(&model.DEResult{
 		AppID:  in.AppID,
 		Status: in.Status,
 	})
@@ -158,7 +158,7 @@ func (s *LosApiServer) NotificationDE1(_ context.Context, in *v1.NotificationDE1
 
 func (s *LosApiServer) QueryState(_ context.Context, in *v1.QueryStateRequest) (*v1.QueryStateResponse, error) {
 
-	st := s.Service.QueryApplicationState(in.AppID)
+	st := s.QueryApplicationState(in.AppID)
 
 	return &v1.QueryStateResponse{
 		LoanAppState: &v1.LoanAppState{

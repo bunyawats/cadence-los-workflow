@@ -36,37 +36,37 @@ func init() {
 
 	boot = rkboot.NewBoot()
 
-	r := service.NewRabbitMqService(service.RabbitMqConfig{
-		RabbitMqUri:  getConfigString(rabbitMqUri),
-		InQueueName:  getConfigString(rabbitMqInQueue),
-		OutQueueName: getConfigString(rabbitMqOutQueue),
-	})
-
-	m := service.NewMongodbHelperWithCallBack(
+	mg := service.NewMongodbHelperWithCallBack(
 		func() *mongo.Database {
 			return rkmongo.GetMongoDB("ssc-mongo", "test")
 		},
 	)
 
-	var h common.WorkflowHelper
-	h.SetupServiceConfig()
+	var wh common.WorkflowHelper
+	wh.SetupServiceConfig()
+
+	rb := service.NewRabbitMqService(service.RabbitMqConfig{
+		RabbitMqUri:  getConfigString(rabbitMqUri),
+		InQueueName:  getConfigString(rabbitMqInQueue),
+		OutQueueName: getConfigString(rabbitMqOutQueue),
+	}, mg, &wh)
 
 	var err error
-	workflowClient, err := h.Builder.BuildCadenceClient()
+	wc, err := wh.Builder.BuildCadenceClient()
 	if err != nil {
 		panic(err)
 	}
 
-	w := service.WorkflowService{
-		MongodbService:  m,
-		WorkflowHelper:  &h,
-		RabbitMqService: r,
+	wf := service.WorkflowService{
+		MongodbService:  mg,
+		WorkflowHelper:  &wh,
+		RabbitMqService: rb,
 	}
 
 	losApiServer = &v1.LosApiServer{
-		Context:       context.Background(),
-		Service:       w,
-		CadenceClient: workflowClient,
+		Context:         context.Background(),
+		WorkflowService: wf,
+		Client:          wc,
 	}
 
 }

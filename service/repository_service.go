@@ -18,8 +18,7 @@ type (
 	MongodbService struct {
 		getCon         func() *mongo.Database
 		collectionName string
-		//mongoCollection *mongo.Collection
-		ctx context.Context
+		ctx            context.Context
 	}
 
 	MongodbConfig struct {
