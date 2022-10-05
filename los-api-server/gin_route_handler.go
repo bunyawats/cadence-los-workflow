@@ -166,7 +166,7 @@ func (g GinHandlerHelper) SubmitFormOneHandler(c *gin.Context) {
 	}
 	r.AppID = c.Param("appId")
 
-	id, err := g.WorkflowService.GetWorkflowIdByAppID(r.AppID)
+	id, err := g.GetWorkflowIdByAppID(r.AppID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -204,7 +204,7 @@ func (g GinHandlerHelper) SubmitFormTwoHandler(c *gin.Context) {
 	}
 	r.AppID = c.Param("appId")
 
-	id, err := g.MongodbService.GetWorkflowIdByAppID(r.AppID)
+	id, err := g.GetWorkflowIdByAppID(r.AppID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
