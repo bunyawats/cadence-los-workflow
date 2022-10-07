@@ -10,7 +10,7 @@ require (
 	github.com/rookie-ninja/rk-boot/v2 v2.2.6
 	github.com/rookie-ninja/rk-db/mongodb v1.2.6
 	github.com/rookie-ninja/rk-entry/v2 v2.2.6
-	github.com/rookie-ninja/rk-grpc/v2 v2.2.9
+	github.com/rookie-ninja/rk-grpc/v2 v2.2.8
 	github.com/streadway/amqp v1.0.0
 	github.com/uber-go/tally v3.5.0+incompatible
 	github.com/uber/cadence-idl v0.0.0-20220916162104-b60a05be278d
@@ -30,11 +30,9 @@ require (
 	github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239 // indirect
 	github.com/apache/thrift v0.0.0-20161221203622-b2a4d4ae21c7 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cristalhq/jwt/v3 v3.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
@@ -55,7 +53,6 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/improbable-eng/grpc-web v0.15.0 // indirect
 	github.com/jessevdk/go-flags v1.5.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kisielk/errcheck v1.6.2 // indirect
@@ -81,7 +78,6 @@ require (
 	github.com/robfig/cron v1.2.0 // indirect
 	github.com/rookie-ninja/rk-logger v1.2.11 // indirect
 	github.com/rookie-ninja/rk-query v1.2.14 // indirect
-	github.com/rs/cors v1.8.2 // indirect
 	github.com/soheilhy/cmux v0.1.5 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
@@ -128,5 +124,4 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.3.3 // indirect
-	nhooyr.io/websocket v1.8.7 // indirect
 )
