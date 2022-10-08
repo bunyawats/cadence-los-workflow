@@ -1,0 +1,7 @@
+type: google.api.Service
+config_version: 3
+
+http:
+  rules:
+    - selector: api.v1.LOS.QueryState
+      get: /losapis/v1/state

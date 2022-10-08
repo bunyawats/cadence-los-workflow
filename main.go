@@ -77,7 +77,7 @@ func main() {
 	// register grpc
 	entry := rkgrpc.GetGrpcEntry("ssc-grpc")
 	entry.AddRegFuncGrpc(registerLosServer)
-	//entry.AddRegFuncGw(nil)
+	entry.AddRegFuncGw(los.RegisterLOSHandlerFromEndpoint)
 
 	boot.Bootstrap(context.TODO())
 	boot.WaitForShutdownSig(context.TODO())

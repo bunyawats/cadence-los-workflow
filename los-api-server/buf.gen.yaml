@@ -10,3 +10,12 @@ plugins:
     opt:
       - paths=source_relative
       - require_unimplemented_servers=false
+  - name: grpc-gateway
+    out: losapis/gen/
+    opt:
+      - paths=source_relative
+      - grpc_api_configuration=losapis/v1/gw_mapping.yaml
+  - name: openapiv2
+    out: losapis/gen/
+    opt:
+      - grpc_api_configuration=losapis/v1/gw_mapping.yaml
