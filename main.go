@@ -75,9 +75,13 @@ func main() {
 	fmt.Println("Hello Cadence")
 
 	// register grpc
-	entry := rkgrpc.GetGrpcEntry("ssc-grpc")
-	entry.AddRegFuncGrpc(registerLosServer)
-	entry.AddRegFuncGw(los.RegisterLOSHandlerFromEndpoint)
+	eGrpc := rkgrpc.GetGrpcEntry("los-grpc")
+	eGrpc.AddRegFuncGrpc(registerLosServer)
+	eGrpc.AddRegFuncGw(los.RegisterLOSHandlerFromEndpoint)
+
+	eGw := rkgrpc.GetGrpcEntry("los-gw")
+	eGw.AddRegFuncGrpc(registerLosServer)
+	eGw.AddRegFuncGw(los.RegisterLOSHandlerFromEndpoint)
 
 	boot.Bootstrap(context.TODO())
 	boot.WaitForShutdownSig(context.TODO())

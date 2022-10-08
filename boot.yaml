@@ -14,10 +14,24 @@ logger:
       outputPaths: [ "logs/log.log" ]
       encoding: json
 grpc:
-  - name: ssc-grpc
+  - name: los-grpc
     port: 8082
     enabled: true
     enableReflection: true
+    enableRkGwOption: false
+    loggerEntry: ssc-logger
+    commonService:
+      enabled: true
+    prom:
+      enabled: true
+    middleware:
+      logging:
+        enabled: true
+      prom:
+        enabled: true
+  - name: los-gw
+    port: 8084
+    enabled: true
     enableRkGwOption: true
     loggerEntry: ssc-logger
     commonService:
