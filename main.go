@@ -6,13 +6,14 @@ import (
 	v1 "cadence-los-workflow/los-api-server/losapis/impl/v1"
 	"cadence-los-workflow/service"
 	"context"
-	"fmt"
+	"flag"
 	rkboot "github.com/rookie-ninja/rk-boot/v2"
 	rkmongo "github.com/rookie-ninja/rk-db/mongodb"
 	rkentry "github.com/rookie-ninja/rk-entry/v2/entry"
 	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
 	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc"
+	"log"
 )
 
 const (
@@ -24,6 +25,9 @@ const (
 )
 
 var (
+	rabbitMqService *service.RabbitMqService
+	workflowService service.WorkflowService
+
 	losApiServer *v1.LosApiServer
 	boot         *rkboot.Boot
 )
@@ -45,7 +49,7 @@ func init() {
 	var wh common.WorkflowHelper
 	wh.SetupServiceConfig()
 
-	rb := service.NewRabbitMqService(service.RabbitMqConfig{
+	rabbitMqService = service.NewRabbitMqService(service.RabbitMqConfig{
 		RabbitMqUri:  getConfigString(rabbitMqUri),
 		InQueueName:  getConfigString(rabbitMqInQueue),
 		OutQueueName: getConfigString(rabbitMqOutQueue),
@@ -57,22 +61,37 @@ func init() {
 		panic(err)
 	}
 
-	wf := service.WorkflowService{
+	workflowService = service.WorkflowService{
 		MongodbService:  mg,
 		WorkflowHelper:  &wh,
-		RabbitMqService: rb,
+		RabbitMqService: rabbitMqService,
 	}
 
 	losApiServer = &v1.LosApiServer{
 		Context:         context.Background(),
-		WorkflowService: wf,
+		WorkflowService: workflowService,
 		Client:          wc,
 	}
 
 }
 
 func main() {
-	fmt.Println("Hello Cadence")
+
+	var mode string
+	flag.StringVar(&mode, "m", "all", "Mode is all or api only.")
+	flag.Parse()
+
+	if mode == "all" {
+		rabbitMqService.ConsumeRabbitMqMessage()
+
+		go func() {
+
+			log.Println("start workflow worker")
+
+			workflowService.RegisterWorkflowAndActivity()
+			workflowService.StartWorkers()
+		}()
+	}
 
 	// register grpc
 	eGrpc := rkgrpc.GetGrpcEntry("los-grpc")

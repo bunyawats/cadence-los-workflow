@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"log"
-	"time"
 )
 
 type (
@@ -48,26 +47,26 @@ func NewRabbitMqService(config RabbitMqConfig, mg *MongodbService, wh *common.Wo
 	}
 }
 
-func (r *RabbitMqService) PublishAppDEOne(payload *model.LoanApplication) {
+func (s *RabbitMqService) PublishAppDEOne(payload *model.LoanApplication) {
 
 	fmt.Println("Call PublishAppDEOne API", payload)
 
 	data, _ := json.Marshal(payload)
-	queueName := r.outQueueName
-	r.publishMessage(queueName, data)
+	queueName := s.outQueueName
+	s.publishMessage(queueName, data)
 }
 
-func (r *RabbitMqService) PublishDEResult(payload *model.DEResult) {
+func (s *RabbitMqService) PublishDEResult(payload *model.DEResult) {
 
 	fmt.Println("Call PublishDEResult API", payload)
 
 	data, _ := json.Marshal(payload)
-	queueName := r.inQueueName
-	r.publishMessage(queueName, data)
+	queueName := s.inQueueName
+	s.publishMessage(queueName, data)
 }
 
-func (r *RabbitMqService) publishMessage(queueName string, data []byte) {
-	publishChannelAmqp, _ := r.amqpConnection.Channel()
+func (s *RabbitMqService) publishMessage(queueName string, data []byte) {
+	publishChannelAmqp, _ := s.amqpConnection.Channel()
 	err := publishChannelAmqp.Publish(
 		"",
 		queueName,
@@ -83,11 +82,13 @@ func (r *RabbitMqService) publishMessage(queueName string, data []byte) {
 	}
 }
 
-func (r *RabbitMqService) ConsumeRabbitMqMessage() {
+func (s *RabbitMqService) ConsumeRabbitMqMessage() {
 
-	consumeChannelAmqp, _ := r.amqpConnection.Channel()
+	log.Println("start messaging listener")
+
+	consumeChannelAmqp, _ := s.amqpConnection.Channel()
 	msgs, _ := consumeChannelAmqp.Consume(
-		r.inQueueName,
+		s.inQueueName,
 		"",
 		true,
 		false,
@@ -96,30 +97,29 @@ func (r *RabbitMqService) ConsumeRabbitMqMessage() {
 		nil,
 	)
 	go func() {
-		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
+		for m := range msgs {
+			log.Printf("Received a message: %s", m.Body)
 
-			var dr model.DEResult
-			json.Unmarshal(d.Body, &r)
+			var deResult model.DEResult
+			json.Unmarshal(m.Body, &deResult)
 
-			cb, _ := json.Marshal(&r)
+			cb, _ := json.Marshal(&deResult)
 
-			la, err := r.GetLoanApplicationByAppID(dr.AppID)
+			la, err := s.GetLoanApplicationByAppID(deResult.AppID)
+
+			log.Printf("Loan App: %v", la)
 			if err != nil {
-				return
+				log.Print(err.Error())
+			} else {
+				s.SignalWorkflow(
+					la.WorkflowID,
+					model.SignalName,
+					&model.SignalPayload{
+						Action:  model.DEOneResultNotification,
+						Content: cb,
+					},
+				)
 			}
-
-			r.SignalWorkflow(
-				la.WorkflowID,
-				model.SignalName,
-				&model.SignalPayload{
-					Action:  model.DEOneResultNotification,
-					Content: cb,
-				},
-			)
-			time.Sleep(time.Second * 5)
-			//state := QueryApplicationState(m, h, r.AppID)
-			//fmt.Printf("current state: %v", state)
 		}
 	}()
 }
