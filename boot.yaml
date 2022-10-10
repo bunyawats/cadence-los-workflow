@@ -38,10 +38,10 @@ grpc:
       enabled: true
     sw:
       enabled: true
-      jsonPath: "api/losapis/gen/v1/"
+      jsonPath: "losapis/gen/v1/"
     docs:
       enabled: true
-      specPath: "api/losapis/gen/v1/"
+      specPath: "losapis/gen/v1/"
     prom:
       enabled: true
     middleware:
