@@ -1,7 +1,7 @@
 package v1
 
 import (
-	v1 "cadence-los-workflow/los-api-server/losapis/gen/v1"
+	"cadence-los-workflow/losapis/gen/v1"
 	"cadence-los-workflow/model"
 	"cadence-los-workflow/service"
 	"context"
@@ -12,13 +12,12 @@ import (
 )
 
 type LosApiServer struct {
-	v1.UnimplementedLOSServer
 	Context context.Context
 	client.Client
 	service.WorkflowService
 }
 
-func (s *LosApiServer) CreateNewApp(_ context.Context, in *v1.CreateNewAppRequest) (*v1.CreateNewAppResponse, error) {
+func (s *LosApiServer) CreateNewApp(_ context.Context, in *los.CreateNewAppRequest) (*los.CreateNewAppResponse, error) {
 
 	appID := in.AppID
 
@@ -37,12 +36,12 @@ func (s *LosApiServer) CreateNewApp(_ context.Context, in *v1.CreateNewAppReques
 	st := s.QueryApplicationState(appID)
 	service.AssertState(model.Created, st.State)
 
-	return &v1.CreateNewAppResponse{
+	return &los.CreateNewAppResponse{
 		AppID: appID,
 	}, nil
 }
 
-func (s *LosApiServer) SubmitFormOne(_ context.Context, in *v1.SubmitFormOneRequest) (*v1.SubmitFormOneResponse, error) {
+func (s *LosApiServer) SubmitFormOne(_ context.Context, in *los.SubmitFormOneRequest) (*los.SubmitFormOneResponse, error) {
 
 	r := model.LoanApplication{
 		AppID: in.AppID,
@@ -69,8 +68,8 @@ func (s *LosApiServer) SubmitFormOne(_ context.Context, in *v1.SubmitFormOneRequ
 	st := s.QueryApplicationState(r.AppID)
 	service.AssertState(model.FormOneSubmitted, st.State)
 
-	return &v1.SubmitFormOneResponse{
-		LoanApp: &v1.LoanApplication{
+	return &los.SubmitFormOneResponse{
+		LoanApp: &los.LoanApplication{
 			AppID: r.AppID,
 			FName: r.Fname,
 			LName: r.Lname,
@@ -78,7 +77,7 @@ func (s *LosApiServer) SubmitFormOne(_ context.Context, in *v1.SubmitFormOneRequ
 	}, nil
 }
 
-func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *v1.SubmitFormTwoRequest) (*v1.SubmitFormTwoResponse, error) {
+func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *los.SubmitFormTwoRequest) (*los.SubmitFormTwoResponse, error) {
 
 	r := model.LoanApplication{
 		AppID:   in.AppID,
@@ -105,8 +104,8 @@ func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *v1.SubmitFormTwoRequ
 	st := s.QueryApplicationState(r.AppID)
 	service.AssertState(model.FormTwoSubmitted, st.State)
 
-	return &v1.SubmitFormTwoResponse{
-		LoanApp: &v1.LoanApplication{
+	return &los.SubmitFormTwoResponse{
+		LoanApp: &los.LoanApplication{
 			AppID:   r.AppID,
 			FName:   r.Fname,
 			LName:   r.Lname,
@@ -116,7 +115,7 @@ func (s *LosApiServer) SubmitFormTwo(_ context.Context, in *v1.SubmitFormTwoRequ
 	}, nil
 }
 
-func (s *LosApiServer) SubmitDeOne(_ context.Context, in *v1.SubmitDeOneRequest) (*v1.SubmitDeOneResponse, error) {
+func (s *LosApiServer) SubmitDeOne(_ context.Context, in *los.SubmitDeOneRequest) (*los.SubmitDeOneResponse, error) {
 
 	id, err := s.MongodbService.GetWorkflowIdByAppID(in.AppID)
 	if err != nil {
@@ -138,30 +137,30 @@ func (s *LosApiServer) SubmitDeOne(_ context.Context, in *v1.SubmitDeOneRequest)
 	st := s.QueryApplicationState(in.AppID)
 	service.AssertState(model.DEOneSubmitted, st.State)
 
-	return &v1.SubmitDeOneResponse{
+	return &los.SubmitDeOneResponse{
 		AppID: in.AppID,
 	}, nil
 }
 
-func (s *LosApiServer) NotificationDE1(_ context.Context, in *v1.NotificationDE1Request) (*v1.NotificationDE1Response, error) {
+func (s *LosApiServer) NotificationDE1(_ context.Context, in *los.NotificationDE1Request) (*los.NotificationDE1Response, error) {
 
 	s.PublishDEResult(&model.DEResult{
 		AppID:  in.AppID,
 		Status: in.Status,
 	})
 
-	return &v1.NotificationDE1Response{
+	return &los.NotificationDE1Response{
 		AppID:  in.AppID,
 		Status: in.Status,
 	}, nil
 }
 
-func (s *LosApiServer) QueryState(_ context.Context, in *v1.QueryStateRequest) (*v1.QueryStateResponse, error) {
+func (s *LosApiServer) QueryState(_ context.Context, in *los.QueryStateRequest) (*los.QueryStateResponse, error) {
 
 	st := s.QueryApplicationState(in.AppID)
 
-	return &v1.QueryStateResponse{
-		LoanAppState: &v1.LoanAppState{
+	return &los.QueryStateResponse{
+		LoanAppState: &los.LoanAppState{
 			AppID: in.AppID,
 			State: string(st.State),
 		},

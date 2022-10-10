@@ -1,8 +1,7 @@
-package ginapis
+package service
 
 import (
 	"cadence-los-workflow/model"
-	"cadence-los-workflow/service"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -13,7 +12,7 @@ import (
 
 type (
 	GinHandlerHelper struct {
-		service.WorkflowService
+		WorkflowService
 		client.Client
 	}
 )
@@ -50,7 +49,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 	)
 	time.Sleep(time.Second)
 	s := g.QueryApplicationState(appID)
-	service.AssertState(model.Created, s.State)
+	AssertState(model.Created, s.State)
 
 	cb, _ = json.Marshal(&model.LoanApplication{
 		AppID: appID,
@@ -68,7 +67,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 	)
 	time.Sleep(time.Second)
 	s = g.QueryApplicationState(appID)
-	service.AssertState(model.FormOneSubmitted, s.State)
+	AssertState(model.FormOneSubmitted, s.State)
 
 	cb, _ = json.Marshal(&model.LoanApplication{
 		AppID:   appID,
@@ -86,7 +85,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 	)
 	time.Sleep(time.Second)
 	s = g.QueryApplicationState(appID)
-	service.AssertState(model.FormTwoSubmitted, s.State)
+	AssertState(model.FormTwoSubmitted, s.State)
 
 	cb, _ = json.Marshal(appID)
 
@@ -100,7 +99,7 @@ func (g GinHandlerHelper) AutoRunLosWorkflowHandler(c *gin.Context) {
 	)
 	time.Sleep(time.Second)
 	s = g.QueryApplicationState(appID)
-	service.AssertState(model.DEOneSubmitted, s.State)
+	AssertState(model.DEOneSubmitted, s.State)
 
 	cb, _ = json.Marshal(&model.DEResult{
 		AppID:  appID,

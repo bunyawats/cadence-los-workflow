@@ -1,7 +1,7 @@
 /.idea/
 
 /los-workflow
-/los-api-server/losapis/gen/
+/losapis/gen/
 /go.sum
 /config/.env
 /logs/log.log

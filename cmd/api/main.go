@@ -2,9 +2,8 @@ package main
 
 import (
 	"cadence-los-workflow/common"
-	"cadence-los-workflow/los-api-server/ginapis"
-	los "cadence-los-workflow/los-api-server/losapis/gen/v1"
-	v1 "cadence-los-workflow/los-api-server/losapis/impl/v1"
+	"cadence-los-workflow/losapis/gen/v1"
+	"cadence-los-workflow/losapis/impl/v1"
 	"cadence-los-workflow/service"
 	"context"
 	"fmt"
@@ -26,7 +25,7 @@ const (
 )
 
 var (
-	ginHandlerHelper ginapis.GinHandlerHelper
+	ginHandlerHelper service.GinHandlerHelper
 	losApiServer     *v1.LosApiServer
 )
 
@@ -58,7 +57,7 @@ func init() {
 		RabbitMqService: r,
 	}
 
-	ginHandlerHelper = ginapis.GinHandlerHelper{
+	ginHandlerHelper = service.GinHandlerHelper{
 		WorkflowService: wf,
 		Client:          workflowClient,
 	}
