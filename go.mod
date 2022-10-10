@@ -4,12 +4,14 @@ go 1.19
 
 require (
 	github.com/gin-gonic/gin v1.8.1
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3
 	github.com/m3db/prometheus_client_golang v1.12.8
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pborman/uuid v1.2.1
 	github.com/rookie-ninja/rk-boot/v2 v2.2.6
 	github.com/rookie-ninja/rk-db/mongodb v1.2.6
 	github.com/rookie-ninja/rk-entry/v2 v2.2.6
+	github.com/rookie-ninja/rk-gin/v2 v2.2.8
 	github.com/rookie-ninja/rk-grpc/v2 v2.2.8
 	github.com/streadway/amqp v1.0.0
 	github.com/uber-go/tally v3.5.0+incompatible
@@ -36,6 +38,7 @@ require (
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/gin-contrib/pprof v1.3.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -47,12 +50,10 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gogo/status v1.1.1 // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
-	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jessevdk/go-flags v1.5.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -79,6 +80,7 @@ require (
 	github.com/robfig/cron v1.2.0 // indirect
 	github.com/rookie-ninja/rk-logger v1.2.11 // indirect
 	github.com/rookie-ninja/rk-query v1.2.14 // indirect
+	github.com/rs/xid v1.3.0 // indirect
 	github.com/soheilhy/cmux v0.1.5 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect

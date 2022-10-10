@@ -49,3 +49,20 @@ grpc:
         enabled: true
       prom:
         enabled: true
+gin:
+  - name: los-gin
+    port: 8086
+    enabled: true
+    sw:
+      enabled: true               # Enable Swagger UI，default path: /sw
+    docs:
+      enabled: true               # Enable API Doc UI，default path: /docs
+    prom:
+      enabled: true               # Enable Prometheus Client，default path: /metrics
+    middleware:
+      logging:
+        enabled: true
+      prom:
+        enabled: true
+      meta:
+        enabled: true

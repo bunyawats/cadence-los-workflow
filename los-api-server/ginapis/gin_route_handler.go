@@ -1,4 +1,4 @@
-package main
+package ginapis
 
 import (
 	"cadence-los-workflow/model"

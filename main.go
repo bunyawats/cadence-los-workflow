@@ -2,6 +2,7 @@ package main
 
 import (
 	"cadence-los-workflow/common"
+	"cadence-los-workflow/los-api-server/ginapis"
 	los "cadence-los-workflow/los-api-server/losapis/gen/v1"
 	v1 "cadence-los-workflow/los-api-server/losapis/impl/v1"
 	"cadence-los-workflow/service"
@@ -10,6 +11,7 @@ import (
 	rkboot "github.com/rookie-ninja/rk-boot/v2"
 	rkmongo "github.com/rookie-ninja/rk-db/mongodb"
 	rkentry "github.com/rookie-ninja/rk-entry/v2/entry"
+	rkgin "github.com/rookie-ninja/rk-gin/v2/boot"
 	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
 	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc"
@@ -25,8 +27,9 @@ const (
 )
 
 var (
-	rabbitMqService *service.RabbitMqService
-	workflowService service.WorkflowService
+	rabbitMqService  *service.RabbitMqService
+	workflowService  service.WorkflowService
+	ginHandlerHelper ginapis.GinHandlerHelper
 
 	losApiServer *v1.LosApiServer
 	boot         *rkboot.Boot
@@ -67,6 +70,11 @@ func init() {
 		RabbitMqService: rabbitMqService,
 	}
 
+	ginHandlerHelper = ginapis.GinHandlerHelper{
+		WorkflowService: workflowService,
+		Client:          wc,
+	}
+
 	losApiServer = &v1.LosApiServer{
 		Context:         context.Background(),
 		WorkflowService: workflowService,
@@ -98,9 +106,14 @@ func main() {
 	eGrpc.AddRegFuncGrpc(registerLosServer)
 	eGrpc.AddRegFuncGw(los.RegisterLOSHandlerFromEndpoint)
 
+	// register grpc-gw
 	eGw := rkgrpc.GetGrpcEntry("los-gw")
 	eGw.AddRegFuncGrpc(registerLosServer)
 	eGw.AddRegFuncGw(los.RegisterLOSHandlerFromEndpoint)
+
+	// register gin
+	eGin := rkgin.GetGinEntry("los-gin")
+	ginHandlerHelper.RegisterRouter(eGin.Router)
 
 	boot.Bootstrap(context.TODO())
 	boot.WaitForShutdownSig(context.TODO())
