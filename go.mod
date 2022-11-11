@@ -8,7 +8,7 @@ require (
 	github.com/m3db/prometheus_client_golang v1.12.8
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pborman/uuid v1.2.1
-	github.com/rookie-ninja/rk-boot/v2 v2.2.9
+	github.com/rookie-ninja/rk-boot/v2 v2.2.10
 	github.com/rookie-ninja/rk-db/mongodb v1.2.9
 	github.com/rookie-ninja/rk-entry/v2 v2.2.10
 	github.com/rookie-ninja/rk-gin/v2 v2.2.13
@@ -18,7 +18,7 @@ require (
 	github.com/uber/cadence-idl v0.0.0-20220916162104-b60a05be278d
 	go.mongodb.org/mongo-driver v1.11.0
 	go.uber.org/cadence v0.17.1-0.20221101020339-dcaec7737070
-	go.uber.org/yarpc v1.68.0
+	go.uber.org/yarpc v1.69.0
 	go.uber.org/zap v1.23.0
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
@@ -77,7 +77,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.13.1 // indirect
+	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
@@ -91,7 +91,7 @@ require (
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/spf13/viper v1.13.0 // indirect
+	github.com/spf13/viper v1.14.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
@@ -122,17 +122,17 @@ require (
 	go.uber.org/net/metrics v1.3.1 // indirect
 	go.uber.org/ratelimit v0.2.0 // indirect
 	go.uber.org/thriftrw v1.29.2 // indirect
-	golang.org/x/crypto v0.1.0 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20221031165847-c99f073a8326 // indirect
+	golang.org/x/crypto v0.2.0 // indirect
+	golang.org/x/exp/typeparams v0.0.0-20221110155412-d0897a79cd37 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/mod v0.6.0 // indirect
-	golang.org/x/net v0.1.0 // indirect
+	golang.org/x/mod v0.7.0 // indirect
+	golang.org/x/net v0.2.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
-	golang.org/x/time v0.1.0 // indirect
-	golang.org/x/tools v0.2.0 // indirect
-	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c // indirect
+	golang.org/x/time v0.2.0 // indirect
+	golang.org/x/tools v0.3.0 // indirect
+	google.golang.org/genproto v0.0.0-20221109142239-94d6d90a7d66 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
