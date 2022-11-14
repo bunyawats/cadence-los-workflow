@@ -8,11 +8,11 @@ require (
 	github.com/m3db/prometheus_client_golang v1.12.8
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pborman/uuid v1.2.1
-	github.com/rookie-ninja/rk-boot/v2 v2.2.10
-	github.com/rookie-ninja/rk-db/mongodb v1.2.9
-	github.com/rookie-ninja/rk-entry/v2 v2.2.10
-	github.com/rookie-ninja/rk-gin/v2 v2.2.13
-	github.com/rookie-ninja/rk-grpc/v2 v2.2.12
+	github.com/rookie-ninja/rk-boot/v2 v2.2.11
+	github.com/rookie-ninja/rk-db/mongodb v1.2.10
+	github.com/rookie-ninja/rk-entry/v2 v2.2.11
+	github.com/rookie-ninja/rk-gin/v2 v2.2.14
+	github.com/rookie-ninja/rk-grpc/v2 v2.2.13
 	github.com/streadway/amqp v1.0.0
 	github.com/uber-go/tally v3.5.0+incompatible
 	github.com/uber/cadence-idl v0.0.0-20220916162104-b60a05be278d
@@ -123,7 +123,7 @@ require (
 	go.uber.org/ratelimit v0.2.0 // indirect
 	go.uber.org/thriftrw v1.29.2 // indirect
 	golang.org/x/crypto v0.2.0 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20221110155412-d0897a79cd37 // indirect
+	golang.org/x/exp/typeparams v0.0.0-20221111204811-129d8d6c17ab // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.2.0 // indirect
@@ -132,7 +132,7 @@ require (
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/time v0.2.0 // indirect
 	golang.org/x/tools v0.3.0 // indirect
-	google.golang.org/genproto v0.0.0-20221109142239-94d6d90a7d66 // indirect
+	google.golang.org/genproto v0.0.0-20221111202108-142d8a6fa32e // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
