@@ -46,11 +46,11 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.1 // indirect
-	github.com/goccy/go-json v0.9.11 // indirect
+	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gogo/status v1.1.1 // indirect
-	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.3 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -123,7 +123,7 @@ require (
 	go.uber.org/ratelimit v0.2.0 // indirect
 	go.uber.org/thriftrw v1.29.2 // indirect
 	golang.org/x/crypto v0.3.0 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20221114191408-850992195362 // indirect
+	golang.org/x/exp/typeparams v0.0.0-20221126150942-6ab00d035af9 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.2.0 // indirect
