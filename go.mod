@@ -5,14 +5,15 @@ go 1.19
 require (
 	github.com/gin-gonic/gin v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.14.0
+	github.com/kyokomi/emoji/v2 v2.2.11
 	github.com/m3db/prometheus_client_golang v1.12.8
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pborman/uuid v1.2.1
-	github.com/rookie-ninja/rk-boot/v2 v2.2.12
-	github.com/rookie-ninja/rk-db/mongodb v1.2.11
-	github.com/rookie-ninja/rk-entry/v2 v2.2.13
-	github.com/rookie-ninja/rk-gin/v2 v2.2.15
-	github.com/rookie-ninja/rk-grpc/v2 v2.2.14
+	github.com/rookie-ninja/rk-boot/v2 v2.2.13
+	github.com/rookie-ninja/rk-db/mongodb v1.2.12
+	github.com/rookie-ninja/rk-entry/v2 v2.2.14
+	github.com/rookie-ninja/rk-gin/v2 v2.2.16
+	github.com/rookie-ninja/rk-grpc/v2 v2.2.15
 	github.com/streadway/amqp v1.0.0
 	github.com/uber-go/tally v3.5.0+incompatible
 	github.com/uber/cadence-idl v0.0.0-20221119005017-6c250ae41984
@@ -82,7 +83,7 @@ require (
 	github.com/prometheus/common v0.39.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/robfig/cron v1.2.0 // indirect
-	github.com/rookie-ninja/rk-logger v1.2.12 // indirect
+	github.com/rookie-ninja/rk-logger v1.2.13 // indirect
 	github.com/rookie-ninja/rk-query v1.2.14 // indirect
 	github.com/rs/cors v1.8.2 // indirect
 	github.com/rs/xid v1.4.0 // indirect

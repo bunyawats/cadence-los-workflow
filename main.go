@@ -7,6 +7,7 @@ import (
 	"cadence-los-workflow/service"
 	"context"
 	"flag"
+	"github.com/kyokomi/emoji/v2"
 	rkboot "github.com/rookie-ninja/rk-boot/v2"
 	rkmongo "github.com/rookie-ninja/rk-db/mongodb"
 	rkentry "github.com/rookie-ninja/rk-entry/v2/entry"
@@ -39,6 +40,8 @@ func getConfigString(name string) string {
 }
 
 func init() {
+
+	emoji.Println("😀 Beer!!!")
 
 	boot = rkboot.NewBoot()
 
