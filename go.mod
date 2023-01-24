@@ -9,13 +9,13 @@ require (
 	github.com/m3db/prometheus_client_golang v1.12.8
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pborman/uuid v1.2.1
-	github.com/rookie-ninja/rk-boot/v2 v2.2.15
-	github.com/rookie-ninja/rk-db/mongodb v1.2.14
-	github.com/rookie-ninja/rk-entry/v2 v2.2.16
-	github.com/rookie-ninja/rk-gin/v2 v2.2.18
+	github.com/rookie-ninja/rk-boot/v2 v2.2.17
+	github.com/rookie-ninja/rk-db/mongodb v1.2.15
+	github.com/rookie-ninja/rk-entry/v2 v2.2.17
+	github.com/rookie-ninja/rk-gin/v2 v2.2.19
 	github.com/rookie-ninja/rk-grpc/v2 v2.2.17
 	github.com/streadway/amqp v1.0.0
-	github.com/uber-go/tally v3.5.0+incompatible
+	github.com/uber-go/tally v3.5.2+incompatible
 	github.com/uber/cadence-idl v0.0.0-20221119005017-6c250ae41984
 	go.mongodb.org/mongo-driver v1.11.1
 	go.uber.org/cadence v0.17.1-0.20221101020339-dcaec7737070
@@ -60,8 +60,8 @@ require (
 	github.com/improbable-eng/grpc-web v0.15.0 // indirect
 	github.com/jessevdk/go-flags v1.5.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/kisielk/errcheck v1.6.2 // indirect
-	github.com/klauspost/compress v1.15.14 // indirect
+	github.com/kisielk/errcheck v1.6.3 // indirect
+	github.com/klauspost/compress v1.15.15 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/m3db/prometheus_client_model v0.2.1 // indirect
 	github.com/m3db/prometheus_common v0.34.7 // indirect
@@ -92,10 +92,10 @@ require (
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/spf13/viper v1.14.0 // indirect
+	github.com/spf13/viper v1.15.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
-	github.com/subosito/gotenv v1.4.1 // indirect
+	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/twmb/murmur3 v1.1.6 // indirect
 	github.com/uber-go/mapdecode v1.0.0 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
@@ -117,14 +117,14 @@ require (
 	go.opentelemetry.io/otel/trace v1.11.2 // indirect
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
-	go.uber.org/dig v1.16.0 // indirect
-	go.uber.org/fx v1.19.0 // indirect
+	go.uber.org/dig v1.16.1 // indirect
+	go.uber.org/fx v1.19.1 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/net/metrics v1.3.1 // indirect
 	go.uber.org/ratelimit v0.2.0 // indirect
 	go.uber.org/thriftrw v1.29.2 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20230108222341-4b8118a2686a // indirect
+	golang.org/x/exp/typeparams v0.0.0-20230118134722-a68e582fa157 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.5.0 // indirect
@@ -133,7 +133,7 @@ require (
 	golang.org/x/text v0.6.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.5.0 // indirect
-	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
+	google.golang.org/genproto v0.0.0-20230123190316-2c411cf9d197 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
