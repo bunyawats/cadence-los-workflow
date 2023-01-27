@@ -19,9 +19,9 @@ require (
 	github.com/uber/cadence-idl v0.0.0-20221119005017-6c250ae41984
 	go.mongodb.org/mongo-driver v1.11.1
 	go.uber.org/cadence v0.17.1-0.20221101020339-dcaec7737070
-	go.uber.org/yarpc v1.69.0
+	go.uber.org/yarpc v1.69.1
 	go.uber.org/zap v1.24.0
-	google.golang.org/grpc v1.52.0
+	google.golang.org/grpc v1.52.3
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -124,7 +124,7 @@ require (
 	go.uber.org/ratelimit v0.2.0 // indirect
 	go.uber.org/thriftrw v1.29.2 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20230118134722-a68e582fa157 // indirect
+	golang.org/x/exp/typeparams v0.0.0-20230126173853-a67bb567ff2e // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.5.0 // indirect
@@ -133,7 +133,7 @@ require (
 	golang.org/x/text v0.6.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.5.0 // indirect
-	google.golang.org/genproto v0.0.0-20230123190316-2c411cf9d197 // indirect
+	google.golang.org/genproto v0.0.0-20230125152338-dcaf20b6aeaa // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
