@@ -29,8 +29,8 @@ type (
 func (s WorkflowService) StartWorkers() {
 	// Configure worker options.
 	workerOptions := worker.Options{
-		MetricsScope: s.WorkflowHelper.WorkerMetricScope,
-		Logger:       s.WorkflowHelper.Logger,
+		MetricsScope: s.WorkerMetricScope,
+		Logger:       s.Logger,
 		FeatureFlags: client.FeatureFlags{
 			WorkflowExecutionAlreadyCompletedErrorEnabled: true,
 		},
